@@ -125,6 +125,6 @@ Real (现实约束) → Cog (认知模型) → Spec (规约文档) → Work (实
 
 ## 更多资源
 
-- 认知敏捷法文档: https://42cog.com
+- 认知敏捷法文档: https://github.com/42ailab/42cog
 - 活水插件平台: https://42plugin.com
-- 活水智能: https://huoshuiai.com
+- 活水AI实验室: https://42ailab.com
