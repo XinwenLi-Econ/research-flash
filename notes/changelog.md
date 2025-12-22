@@ -1,3 +1,5 @@
+## 20251207
+
 遇到的问题：生成`real.md`和`cog.md`时，AI 发现文档已存在，就自动备份，且未按模板样式生成文档。
 
 解决方式：
@@ -9,3 +11,17 @@
 
 统一`.42cog/`下四个目录的结构：
 - .42cog/work/work.md: 更名为`README.md`，删除重复内容。
+
+## 20251220
+
+新增：
+1. ch06 课程资料：notes/course/ch06
+2. 三个技能：
+  - .42plugin/42edu/dev-database-design-v2 
+  - .42plugin/42edu/dev-coding 
+  - .42plugin/42edu/dev-quality-assurance
+3. notes：
+  - notes/claude-code-advanced-techniques-public.md 
+  - notes/claude-code-conversation-guide.md 
+
+更新：notes/20251206-1.md
