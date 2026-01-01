@@ -1,36 +1,37 @@
 // lib/db/index.ts
 // @source: spec.md
-// MVP: 使用内存存储，离线优先架构中 IndexedDB 是主要存储
 
-import type { Flash, FlashStatus } from '@/types/flash';
+import { neon, NeonQueryFunction } from '@neondatabase/serverless';
+import { drizzle, NeonHttpDatabase } from 'drizzle-orm/neon-http';
+import * as schema from './schema';
 
-// 内存存储（MVP阶段）
-const flashStore = new Map<string, Flash>();
+// 延迟初始化数据库连接（避免构建时错误）
+let sql: NeonQueryFunction<false, false> | null = null;
+let dbInstance: NeonHttpDatabase<typeof schema> | null = null;
 
-export const db = {
-  flashes: {
-    create: async (flash: Flash): Promise<Flash> => {
-      flashStore.set(flash.id, flash);
-      return flash;
-    },
+function getDbConnection(): NeonHttpDatabase<typeof schema> {
+  if (!dbInstance) {
+    const databaseUrl = process.env.DATABASE_URL;
 
-    getByDevice: async (deviceId: string): Promise<Flash[]> => {
-      return Array.from(flashStore.values()).filter(f => f.deviceId === deviceId);
-    },
+    if (!databaseUrl) {
+      throw new Error('DATABASE_URL 环境变量未设置');
+    }
 
-    getByStatus: async (status: FlashStatus): Promise<Flash[]> => {
-      return Array.from(flashStore.values()).filter(f => f.status === status);
-    },
+    sql = neon(databaseUrl);
+    dbInstance = drizzle(sql, { schema });
+  }
 
-    update: async (id: string, data: Partial<Flash>): Promise<void> => {
-      const existing = flashStore.get(id);
-      if (existing) {
-        flashStore.set(id, { ...existing, ...data });
-      }
-    },
+  return dbInstance;
+}
 
-    upsert: async (flash: Flash): Promise<void> => {
-      flashStore.set(flash.id, flash);
-    },
+// 导出代理对象，实现延迟初始化
+export const db = new Proxy({} as NeonHttpDatabase<typeof schema>, {
+  get(_, prop: string | symbol) {
+    const instance = getDbConnection();
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    return (instance as any)[prop];
   },
-};
+});
+
+// 导出 schema 供其他模块使用
+export { schema };
