@@ -10,14 +10,26 @@ import { FlashCard } from './FlashCard';
 interface FlashListProps {
   flashes: Flash[];
   onArchive?: (id: string) => void;
+  onDelete?: (id: string) => void;
+  onRestore?: (id: string) => void;
+  onPermanentDelete?: (id: string) => void;
+  onEdit?: (id: string, content: string) => void;
   showArchiveButton?: boolean;
+  showDeleteButton?: boolean;
+  isTrashView?: boolean;
   emptyMessage?: string;
 }
 
 export function FlashList({
   flashes,
   onArchive,
+  onDelete,
+  onRestore,
+  onPermanentDelete,
+  onEdit,
   showArchiveButton = false,
+  showDeleteButton = true,
+  isTrashView = false,
   emptyMessage = '还没有灵感，记录第一个吧！',
 }: FlashListProps) {
   if (flashes.length === 0) {
@@ -35,7 +47,13 @@ export function FlashList({
           key={flash.id}
           flash={flash}
           onArchive={onArchive}
+          onDelete={onDelete}
+          onRestore={onRestore}
+          onPermanentDelete={onPermanentDelete}
+          onEdit={onEdit}
           showArchiveButton={showArchiveButton}
+          showDeleteButton={showDeleteButton}
+          isTrashView={isTrashView}
         />
       ))}
     </div>
