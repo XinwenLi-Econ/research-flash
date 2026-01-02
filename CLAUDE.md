@@ -7,7 +7,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 - 设备：Apple Silicon Mac
 - Node.js：使用 bun 管理（禁止 npm/yarn/pnpm）
 - Python：使用 uv 管理（禁止 pip）
-- Git 托管：cnb.cool
+- Git 托管：GitHub
 
 ## 版本管理规则
 
@@ -17,7 +17,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## 仓库信息
 
-- 仓库地址：https://cnb.cool/xinwen-li/research-flash
+- 仓库地址：https://github.com/XinwenLi-Econ/research-flash
 - 默认分支：main
 
 ## Project Overview
