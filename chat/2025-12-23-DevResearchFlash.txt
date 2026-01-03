@@ -1,0 +1,1171 @@
+
+╭─── Claude Code v2.0.67 ──────────────────────────────────────────────────────╮
+│                                              │ Tips for getting started      │
+│                 Welcome back!                │ Run /init to create a CLAUDE… │
+│                                              │ ───────────────────────────── │
+│                  * ▐▛███▜▌ *                 │ Recent activity               │
+│                 * ▝▜█████▛▘ *                │ No recent activity            │
+│                  *  ▘▘ ▝▝  *                 │                               │
+│                                              │                               │
+│         Opus 4.5 · API Usage Billing         │                               │
+│ ~/…/0.Meta/课程作业/project-template-student │                               │
+╰──────────────────────────────────────────────────────────────────────────────╯
+
+  /model to try Opus 4.5
+══════════════════ Conversation compacted · ctrl+o for history ═════════════════
+  ⎿  Read .42cog/spec/spec.md (606 lines)
+  ⎿  Read .42cog/real/real.md (21 lines)
+  ⎿  Read .42cog/cog/cog.md (37 lines)
+  ⎿ Plan file referenced 
+    (~/.claude-proxy/plans/expressive-enchanting-metcalfe.md)
+
+⏺ 我将继续按照 spec.md 的要求进行完整重构。让我先创建任务清单，然后开始实施。
+
+⏺ Bash(ls -la /Users/kasierlee/Library/CloudStorage/Dropbox/B.MyLearn/1.AI产品研
+      发训练营/0.Meta/课程作业/project-template-student/src)
+  ⎿  total 16                                             
+     drwxr-xr-x@  8 kasierlee  staff   256 Dec 23 10:32 .
+     drwxr-xr-x@ 24 kasierlee  staff   768 Dec 23 10:38 ..
+     … +6 lines (ctrl+o to expand)
+
+⏺ Read(package.json)
+  ⎿  Read 31 lines
+
+⏺ Bash(bun add idb zod drizzle-orm better-sqlite3 && bun add -d
+      @types/better-sqlite3 drizzle-kit)
+  ⎿  Running in the background (↓ to manage)
+
+⏺ Task Output bb84aef
+  ⎿  bun add v1.3.4 (5eb2145b)      
+     [stderr] Resolving dependencies
+
+⏺ Task Output bb84aef
+  ⎿  bun add v1.3.4 (5eb2145b)      
+     [stderr] Resolving dependencies
+
+⏺ 依赖安装正在进行中。让我先开始创建不依赖这些包的代码文件。
+
+⏺ Read(src/types/flash.ts)
+  ⎿  Read 43 lines
+
+⏺ Write(src/types/flash.ts)
+  ⎿  Updated src/types/flash.ts with 30 additions and 18 removals       
+        1 +  // types/flash.ts
+        2 +  // @source: cog.md
+        3 +  
+        4    /**
+        5 -   * Flash 类型定义
+        6 -   * 基于 cog.md 中的实体定义
+        5 +   * 灵感状态枚举
+        6 +   * 状态流转：Incubating → Surfaced → Archived（单向不可逆）
+        7     */
+        8 -  
+        8    export type FlashStatus = 'incubating' | 'surfaced' | 
+            'archived';
+        9    
+       10 +  /**
+       11 +   * 灵感实体
+       12 +   * 唯一编码：时间戳 YYYYMMDDHHmm
+       13 +   */
+       14    export interface Flash {
+       15 -    /** 唯一标识：创建时间戳（格式：YYYYMMDDHHmm） */
+       16 -    id: string;
+       17 -    /** 灵感内容（最大280字） */
+       18 -    content: string;
+       19 -    /** 状态：孵化中 -> 待回顾 -> 已归档 */
+       20 -    status: FlashStatus;
+       21 -    /** 创建时间 */
+       22 -    createdAt: Date;
+       23 -    /** 用户ID（设备UUID） */
+       24 -    userId: string;
+       15 +    id: string;                    // 时间戳编码
+       16 +    content: string;               // 内容，max 280字符 @R2
+       17 +    status: FlashStatus;           // 状态
+       18 +    deviceId: string;              // 所属用户设备UUID
+       19 +    createdAt: Date;               // 创建时间
+       20 +    syncedAt: Date | null;         // 
+          + 同步时间（null表示未同步）@R4
+       21    }
+       22    
+       23 -  export interface User {
+       24 -    /** 设备UUID */
+       23 +  /**
+       24 +   * 创建灵感输入
+       25 +   */
+       26 +  export interface CreateFlashInput {
+       27 +    content: string;               // 1-280字符 @R2
+       28 +  }
+       29 +  
+       30 +  /**
+       31 +   * 离线队列项
+       32 +   */
+       33 +  export interface OfflineQueueItem {
+       34      id: string;
+       35 -    /** 创建时间 */
+       36 -    createdAt: Date;
+       35 +    action: 'create' | 'update' | 'delete';
+       36 +    data: Flash;
+       37 +    timestamp: number;
+       38    }
+       39    
+       40    /** 生成 Flash ID（格式：YYYYMMDDHHmm） */
+     ...
+       35      return `${year}${month}${day}${hour}${minute}`;
+       36    }
+       37    
+       38 -  /** 最大字数限制 */
+       38 +  /** 最大字数限制 @R2 */
+       39    export const MAX_CONTENT_LENGTH = 280;
+       40    
+       41    /** 孵化期天数 */
+
+⏺ Bash(mkdir -p /Users/kasierlee/Library/CloudStorage/Dropbox/B.MyLearn/1.AI产品
+      研发训练营/0.Meta/课程作业/project-template-student/src/lib/offline)
+  ⎿  (No content)
+
+⏺ Write(src/lib/offline/idb.ts)
+  ⎿  Wrote 91 lines to src/lib/offline/idb.ts                              
+     // lib/offline/idb.ts
+     // @source: real.md R4
+     import { openDB, DBSchema, IDBPDatabase } from 'idb';
+     import type { Flash, FlashStatus, OfflineQueueItem } from
+     '@/types/flash';
+     interface FlashDB extends DBSchema {
+       flashes: {
+         key: string;
+         value: Flash;
+     … +81 lines (ctrl+o to expand)
+
+⏺ Write(src/hooks/useOffline.ts)
+  ⎿  Wrote 28 lines to src/hooks/useOffline.ts           
+     // hooks/useOffline.ts
+     // @source: real.md R4
+     'use client';
+     import { useState, useEffect } from 'react';
+     export function useOffline() {
+       const [isOffline, setIsOffline] = useState(false);
+       useEffect(() => {
+     … +18 lines (ctrl+o to expand)
+
+⏺ Write(src/hooks/useSync.ts)
+  ⎿  Wrote 44 lines to src/hooks/useSync.ts                                
+     // hooks/useSync.ts
+     // @source: real.md R4
+     'use client';
+     import { useEffect, useCallback } from 'react';
+     import { useOffline } from './useOffline';
+     import { getPendingSyncItems, clearSyncedItem } from
+     '@/lib/offline/idb';
+     export function useSync() {
+       const { isOffline } = useOffline();
+     … +34 lines (ctrl+o to expand)
+
+⏺ Read(src/hooks/useFlash.ts)
+  ⎿  Read 72 lines
+
+⏺ Write(src/hooks/useFlash.ts)
+  ⎿  Updated src/hooks/useFlash.ts with 134 additions and 58 removals    
+         1 -  /**
+         2 -   * 灵感管理状态 Hook
+         3 -   * 使用 Zustand 进行状态管理
+         4 -   */
+         1 +  // hooks/useFlash.ts
+         2 +  // @source: cog.md, real.md R4
+         3 +  'use client';
+         4    
+         5 -  import { create } from 'zustand';
+         6 -  import { Flash } from '@/types/flash';
+         5 +  import { useState, useCallback, useEffect } from 'react';
+         6 +  import { v4 as uuidv4 } from 'uuid';
+         7 +  import { Flash, CreateFlashInput, OfflineQueueItem, 
+           + generateFlashId } from '@/types/flash';
+         8    import {
+         9 +    saveFlashLocally,
+        10      getAllFlashes,
+        11 -    saveFlash as saveFlashToStorage,
+        12 -    archiveFlash as archiveFlashInStorage,
+        13 -    getIncubatingFlashes,
+        14 -    getSurfacedFlashes,
+        15 -    getArchivedFlashes,
+        16 -  } from '@/lib/storage';
+        11 +    getFlashesByStatus,
+        12 +    updateFlashLocally,
+        13 +    addToSyncQueue,
+        14 +  } from '@/lib/offline/idb';
+        15 +  import { useOffline } from './useOffline';
+        16    
+        17 -  interface FlashState {
+        18 -    /** 所有灵感 */
+        19 -    flashes: Flash[];
+        20 -    /** 是否已加载 */
+        21 -    isLoaded: boolean;
+        22 -    /** 加载灵感 */
+        23 -    loadFlashes: () => void;
+        24 -    /** 添加灵感 */
+        25 -    addFlash: (content: string) => Flash;
+        26 -    /** 归档灵感 */
+        27 -    archiveFlash: (id: string) => void;
+        28 -    /** 获取孵化中的灵感 */
+        29 -    getIncubating: () => Flash[];
+        30 -    /** 获取待回顾的灵感 */
+        31 -    getSurfaced: () => Flash[];
+        32 -    /** 获取已归档的灵感 */
+        33 -    getArchived: () => Flash[];
+        17 +  // 获取或创建设备ID
+        18 +  function getDeviceId(): string {
+        19 +    if (typeof window === 'undefined') return '';
+        20 +  
+        21 +    let deviceId = localStorage.getItem('deviceId');
+        22 +    if (!deviceId) {
+        23 +      deviceId = uuidv4();
+        24 +      localStorage.setItem('deviceId', deviceId);
+        25 +    }
+        26 +    return deviceId;
+        27    }
+        28    
+        29 -  export const useFlashStore = create<FlashState>((set, get) 
+           - => ({
+        30 -    flashes: [],
+        31 -    isLoaded: false,
+        29 +  export function useFlash() {
+        30 +    const [flashes, setFlashes] = useState<Flash[]>([]);
+        31 +    const [isLoading, setIsLoading] = useState(true);
+        32 +    const { isOffline } = useOffline();
+        33    
+        34 -    loadFlashes: () => {
+        35 -      const flashes = getAllFlashes();
+        36 -      set({ flashes, isLoaded: true });
+        37 -    },
+        34 +    // 加载灵感
+        35 +    const loadFlashes = useCallback(async () => {
+        36 +      try {
+        37 +        const allFlashes = await getAllFlashes();
+        38 +        // 按创建时间倒序排列
+        39 +        allFlashes.sort((a, b) =>
+        40 +          new Date(b.createdAt).getTime() - new 
+           + Date(a.createdAt).getTime()
+        41 +        );
+        42 +        setFlashes(allFlashes);
+        43 +      } catch (error) {
+        44 +        console.error('加载灵感失败:', error);
+        45 +      } finally {
+        46 +        setIsLoading(false);
+        47 +      }
+        48 +    }, []);
+        49    
+        50 -    addFlash: (content: string) => {
+        51 -      const flash = saveFlashToStorage(content);
+        52 -      set(state => ({ flashes: [flash, ...state.flashes] }));
+        50 +    // 初始加载
+        51 +    useEffect(() => {
+        52 +      loadFlashes();
+        53 +    }, [loadFlashes]);
+        54 +  
+        55 +    // 创建灵感
+        56 +    const createFlash = useCallback(async (input: 
+           + CreateFlashInput): Promise<Flash> => {
+        57 +      const deviceId = getDeviceId();
+        58 +      const now = new Date();
+        59 +  
+        60 +      const flash: Flash = {
+        61 +        id: generateFlashId(now),
+        62 +        content: input.content,
+        63 +        status: 'incubating',
+        64 +        deviceId,
+        65 +        createdAt: now,
+        66 +        syncedAt: null,
+        67 +      };
+        68 +  
+        69 +      // 保存到本地
+        70 +      await saveFlashLocally(flash);
+        71 +      setFlashes(prev => [flash, ...prev]);
+        72 +  
+        73 +      // 添加到同步队列
+        74 +      const queueItem: OfflineQueueItem = {
+        75 +        id: uuidv4(),
+        76 +        action: 'create',
+        77 +        data: flash,
+        78 +        timestamp: Date.now(),
+        79 +      };
+        80 +      await addToSyncQueue(queueItem);
+        81 +  
+        82 +      // 如果在线，尝试立即同步
+        83 +      if (!isOffline) {
+        84 +        try {
+        85 +          const response = await fetch('/api/flash', {
+        86 +            method: 'POST',
+        87 +            headers: { 'Content-Type': 'application/json' },
+        88 +            body: JSON.stringify({ content: input.content, 
+           + deviceId }),
+        89 +          });
+        90 +  
+        91 +          if (response.ok) {
+        92 +            // 更新同步时间
+        93 +            const syncedFlash = { ...flash, syncedAt: new 
+           + Date() };
+        94 +            await updateFlashLocally(syncedFlash);
+        95 +            setFlashes(prev =>
+        96 +              prev.map(f => f.id === flash.id ? syncedFlash :
+           +  f)
+        97 +            );
+        98 +          }
+        99 +        } catch (error) {
+       100 +          console.error('同步失败，已保存到本地:', error);
+       101 +        }
+       102 +      }
+       103 +  
+       104        return flash;
+       105 -    },
+       105 +    }, [isOffline]);
+       106    
+       107 -    archiveFlash: (id: string) => {
+       108 -      archiveFlashInStorage(id);
+       109 -      set(state => ({
+       110 -        flashes: state.flashes.map(f =>
+       111 -          f.id === id ? { ...f, status: 'archived' as const }
+           -  : f
+       112 -        ),
+       113 -      }));
+       114 -    },
+       107 +    // 归档灵感
+       108 +    const archiveFlash = useCallback(async (id: string) => {
+       109 +      const flash = flashes.find(f => f.id === id);
+       110 +      if (!flash) return;
+       111    
+       112 -    getIncubating: () => {
+       113 -      return getIncubatingFlashes();
+       114 -    },
+       112 +      const updatedFlash: Flash = {
+       113 +        ...flash,
+       114 +        status: 'archived',
+       115 +      };
+       116    
+       117 -    getSurfaced: () => {
+       118 -      return getSurfacedFlashes();
+       119 -    },
+       117 +      await updateFlashLocally(updatedFlash);
+       118 +      setFlashes(prev =>
+       119 +        prev.map(f => f.id === id ? updatedFlash : f)
+       120 +      );
+       121    
+       122 -    getArchived: () => {
+       123 -      return getArchivedFlashes();
+       124 -    },
+       125 -  }));
+       122 +      // 添加到同步队列
+       123 +      const queueItem: OfflineQueueItem = {
+       124 +        id: uuidv4(),
+       125 +        action: 'update',
+       126 +        data: updatedFlash,
+       127 +        timestamp: Date.now(),
+       128 +      };
+       129 +      await addToSyncQueue(queueItem);
+       130 +    }, [flashes]);
+       131 +  
+       132 +    // 按状态筛选
+       133 +    const getFlashesByStatusLocal = useCallback((status: 
+           + Flash['status']) => {
+       134 +      return flashes.filter(f => f.status === status);
+       135 +    }, [flashes]);
+       136 +  
+       137 +    return {
+       138 +      flashes,
+       139 +      isLoading,
+       140 +      createFlash,
+       141 +      archiveFlash,
+       142 +      getIncubating: () => 
+           + getFlashesByStatusLocal('incubating'),
+       143 +      getSurfaced: () => getFlashesByStatusLocal('surfaced'),
+       144 +      getArchived: () => getFlashesByStatusLocal('archived'),
+       145 +      reload: loadFlashes,
+       146 +    };
+       147 +  }
+
+⏺ Write(src/components/CharCounter.tsx)
+  ⎿  Wrote 26 lines to src/components/CharCounter.tsx                 
+     // components/CharCounter.tsx
+     // @source: real.md R2
+     interface CharCounterProps {
+       current: number;
+       max: number;
+     }
+     export function CharCounter({ current, max }: CharCounterProps) {
+       const remaining = max - current;
+     … +16 lines (ctrl+o to expand)
+
+⏺ Read(src/components/FlashInput.tsx)
+  ⎿  Read 94 lines
+
+⏺ Write(src/components/FlashInput.tsx)
+  ⎿  Updated src/components/FlashInput.tsx with 55 additions and 62 removal
+
+        1 +  // components/FlashInput.tsx
+        2 +  // @source: real.md R1, R2
+        3    'use client';
+        4    
+        5 -  /**
+        6 -   * 灵感输入组件
+        7 -   * 符合 real.md 约束：首屏直接展示输入框，无登录拦截
+        8 -   */
+        5 +  import { useState, useCallback, useRef, useEffect } from 
+          + 'react';
+        6 +  import { CharCounter } from './CharCounter';
+        7 +  import { useFlash } from '@/hooks/useFlash';
+        8 +  import { useOffline } from '@/hooks/useOffline';
+        9    
+       10 -  import { useState, useRef, useEffect } from 'react';
+       11 -  import { MAX_CONTENT_LENGTH } from '@/types/flash';
+       10 +  const MAX_LENGTH = 280; // @R2
+       11    
+       12 -  interface FlashInputProps {
+       13 -    onSubmit: (content: string) => void;
+       14 -  }
+       15 -  
+       16 -  export function FlashInput({ onSubmit }: FlashInputProps) {
+       12 +  export function FlashInput() {
+       13      const [content, setContent] = useState('');
+       14 -    const textareaRef = useRef<HTMLTextAreaElement>(null);
+       14 +    const [isSaving, setIsSaving] = useState(false);
+       15 +    const inputRef = useRef<HTMLTextAreaElement>(null);
+       16 +    const { createFlash } = useFlash();
+       17 +    const { isOffline } = useOffline();
+       18    
+       19 -    // 自动聚焦输入框
+       19 +    // @R1: 首屏自动聚焦
+       20      useEffect(() => {
+       21 -      textareaRef.current?.focus();
+       21 +      inputRef.current?.focus();
+       22      }, []);
+       23    
+       24 -    const remainingChars = MAX_CONTENT_LENGTH - 
+          - content.length;
+       25 -    const isOverLimit = remainingChars < 0;
+       26 -    const isNearLimit = remainingChars <= 30 && remainingChars
+          -  >= 0;
+       24 +    const handleSubmit = useCallback(async () => {
+       25 +      if (!content.trim() || content.length > MAX_LENGTH) 
+          + return;
+       26    
+       27 -    const handleSubmit = () => {
+       28 -      const trimmed = content.trim();
+       29 -      if (trimmed && !isOverLimit) {
+       30 -        onSubmit(trimmed);
+       27 +      setIsSaving(true);
+       28 +      try {
+       29 +        await createFlash({ content: content.trim() });
+       30          setContent('');
+       31 -        textareaRef.current?.focus();
+       31 +        // 保存成功反馈（< 300ms）
+       32 +      } catch (error) {
+       33 +        console.error('保存灵感失败:', error);
+       34 +      } finally {
+       35 +        setIsSaving(false);
+       36        }
+       37 -    };
+       37 +    }, [content, createFlash]);
+       38    
+       39      const handleKeyDown = (e: React.KeyboardEvent) => {
+       40        // Ctrl+Enter 或 Cmd+Enter 提交
+     ...
+       42        }
+       43      };
+       44    
+       45 -    return (
+       46 -      <div className="w-full max-w-2xl mx-auto">
+       47 -        <div className="relative">
+       48 -          <textarea
+       49 -            ref={textareaRef}
+       50 -            value={content}
+       51 -            onChange={(e) => setContent(e.target.value)}
+       52 -            onKeyDown={handleKeyDown}
+       53 -            placeholder="记录一个灵感..."
+       54 -            className="w-full h-32 p-4 text-lg border-2 
+          - border-gray-200 rounded-xl
+       55 -                       focus:border-blue-400 
+          - focus:outline-none resize-none
+       56 -                       transition-colors duration-200"
+       57 -            aria-label="输入灵感"
+       58 -            maxLength={MAX_CONTENT_LENGTH + 10} // 
+          - 允许稍微超出以显示提示
+       59 -          />
+       45 +    const isOverLimit = content.length > MAX_LENGTH;
+       46 +    const canSubmit = content.trim().length > 0 && 
+          + !isOverLimit && !isSaving;
+       47    
+       48 -          {/* 字数统计 */}
+       49 -          <div
+       50 -            className={`absolute bottom-3 right-3 text-sm 
+          - transition-colors duration-200
+       51 -                        ${isOverLimit ? 'text-red-500 
+          - font-bold' : ''}
+       52 -                        ${isNearLimit ? 'text-orange-500' : 
+          - 'text-gray-400'}`}
+       53 -          >
+       54 -            {isOverLimit ? (
+       55 -              <span>超出 {-remainingChars} 字</span>
+       56 -            ) : (
+       57 -              <span>{remainingChars}</span>
+       58 -            )}
+       48 +    return (
+       49 +      <div className="w-full max-w-md mx-auto p-4">
+       50 +        {isOffline && (
+       51 +          <div className="mb-2 text-sm text-amber-600">
+       52 +            离线模式 - 灵感将在网络恢复后同步
+       53            </div>
+       54 -        </div>
+       55 -  
+       56 -        {/* 提交按钮 */}
+       57 -        <div className="mt-4 flex justify-between 
+          - items-center">
+       58 -          <span className="text-sm text-gray-400">
+       59 -            ⌘ + Enter 快速保存
+       60 -          </span>
+       54 +        )}
+       55 +        <textarea
+       56 +          ref={inputRef}
+       57 +          value={content}
+       58 +          onChange={(e) => setContent(e.target.value)}
+       59 +          onKeyDown={handleKeyDown}
+       60 +          placeholder="捕捉你的灵感..."
+       61 +          className="w-full h-32 p-3 border rounded-lg 
+          + resize-none focus:ring-2 focus:ring-blue-500 
+          + focus:outline-none"
+       62 +          disabled={isSaving}
+       63 +        />
+       64 +        <div className="flex justify-between items-center 
+          + mt-2">
+       65 +          <CharCounter current={content.length} 
+          + max={MAX_LENGTH} />
+       66            <button
+       67              onClick={handleSubmit}
+       68 -            disabled={!content.trim() || isOverLimit}
+       69 -            className="px-6
+          -   py-2 bg-blue-500 text-white rounded-lg font-medium
+       70 -                       hover:bg-blue-600 disabled:bg-gray-300 
+          - disabled:cursor-not-allowed
+       71 -                       transition-colors duration-200"
+       72 -            data-action="submit-flash"
+       68 +            disabled={!canSubmit}
+       69 +            className="px-4
+          +   py-2 bg-blue-500 text-white rounded-lg disabled:opacity-
+          +  50 disabled:cursor-not-allowed"
+       70            >
+       71 -            保存灵感
+       71 +            {isSaving ? '保存中...' : '保存'}
+       72            </button>
+       73          </div>
+       74 +        {isOverLimit && (
+       75 +          <div className="mt-1 text-sm text-red-500">
+       76 +            请精简至280字内 {/* @R2 */}
+       77 +          </div>
+       78 +        )}
+       79 +        <div className="mt-2 text-sm text-gray-400">
+       80 +          ⌘ + Enter 快速保存
+       81 +        </div>
+       82        </div>
+       83      );
+       84    }
+
+⏺ Read(/tmp/claude/tasks/bb84aef.output)
+  ⎿  Read 31 lines
+
+⏺ Bash(mkdir -p /Users/kasierlee/Library/CloudStorage/Dropbox/B.MyLearn/1.AI产品
+      研发训练营/0.Meta/课程作业/project-template-student/src/app/api/flash &&
+      mkdir -p /Users/kasierlee…)
+  ⎿  (No content)
+
+⏺ 依赖安装遇到问题（better-sqlite3 编译失败），让我调整策略，使用 Bun 内置的 SQLite 支持。
+
+⏺ Bash(bun add idb zod drizzle-orm && bun add -d drizzle-kit)
+  ⎿  Running in the background (↓ to manage)
+
+⏺ 让我继续创建 API 路由和数据库 schema。
+
+⏺ Write(src/lib/db/schema.ts)
+  ⎿  Wrote 21 lines to src/lib/db/schema.ts                                
+     // lib/db/schema.ts
+     // @source: cog.md
+     import { sqliteTable, text, integer } from 'drizzle-orm/sqlite-core';
+     export const flashes = sqliteTable('flashes', {
+       id: text('id').primaryKey(),              // 时间戳编码 YYYYMMDDHHmm
+       content: text('content').notNull(),       // max 280 @R2
+       status: text('status', {
+         enum: ['incubating', 'surfaced', 'archived']
+     … +11 lines (ctrl+o to expand)
+
+⏺ Write(src/lib/db/index.ts)
+  ⎿  Wrote 29 lines to src/lib/db/index.ts            
+     // lib/db/index.ts
+     // @source: spec.md
+     import { drizzle } from 'drizzle-orm/bun-sqlite';
+     import { Database } from 'bun:sqlite';
+     import * as schema from './schema';
+     const sqlite = new Database('researchflash.db');
+     export const db = drizzle(sqlite, { schema });
+     … +19 lines (ctrl+o to expand)
+
+⏺ Write(src/services/flash.service.ts)
+  ⎿  Wrote 108 lines to src/services/flash.service.ts           
+     // services/flash.service.ts
+     // @source: spec.md
+     import { db } from '@/lib/db';
+     import { flashes } from '@/lib/db/schema';
+     import { eq } from 'drizzle-orm';
+     import type { Flash, FlashStatus } from '@/types/flash';
+     function generateFlashId(date: Date = new Date()): string {
+       const year = date.getFullYear();
+     … +98 lines (ctrl+o to expand)
+
+⏺ Write(src/app/api/flash/route.ts)
+  ⎿  Wrote 59 lines to src/app/api/flash/route.ts            
+     // app/api/flash/route.ts
+     // @source: real.md R2
+     import { NextRequest, NextResponse } from 'next/server';
+     import { flashService } from '@/services/flash.service';
+     import { z } from 'zod';
+     // 输入验证 schema @R2
+     const createFlashSchema = z.object({
+       content: z.string().min(1).max(280), // @R2: 280字限制
+     … +49 lines (ctrl+o to expand)
+
+⏺ Write(src/app/api/sync/route.ts)
+  ⎿  Wrote 63 lines to src/app/api/sync/route.ts             
+     // app/api/sync/route.ts
+     // @source: real.md R4
+     import { NextRequest, NextResponse } from 'next/server';
+     import { flashService } from '@/services/flash.service';
+     import { z } from 'zod';
+     // 同步请求验证 schema
+     const syncItemSchema = z.object({
+       id: z.string(),
+     … +53 lines (ctrl+o to expand)
+
+⏺ Read(src/app/page.tsx)
+  ⎿  Read 150 lines
+
+⏺ Read(/tmp/claude/tasks/b1d88b5.output)
+  ⎿  Read 13 lines
+
+⏺ Write(src/app/page.tsx)
+  ⎿  Updated src/app/page.tsx with 18 additions and 26 removals          
+        2    
+        3    /**
+        4     * ResearchFlash 首页
+        5 -   * 符合 real.md 约束：首屏直接展示输入框
+        5 +   * 符合 real.md 约束：首屏直接展示输入框 @R1
+        6     */
+        7    
+        8 -  import { useEffect, useState } from 'react';
+        8 +  import { useState } from 'react';
+        9    import { FlashInput } from '@/components/FlashInput';
+       10    import { FlashList } from '@/components/FlashList';
+       11 -  import { useFlashStore } from '@/hooks/useFlash';
+       11 +  import { useFlash } from '@/hooks/useFlash';
+       12 +  import { useSync } from '@/hooks/useSync';
+       13    
+       14    export default function Home() {
+       15 -    const { flashes, isLoaded, loadFlashes, addFlash, 
+          - archiveFlash } = useFlashStore();
+       15 +    const { flashes, isLoading, archiveFlash, getIncubating, 
+          + getSurfaced, getArchived } = useFlash();
+       16      const [activeTab, setActiveTab] = useState<'incubating' | 
+            'surfaced' | 'archived'>('incubating');
+       17    
+       18 -    // 加载灵感数据
+       19 -    useEffect(() => {
+       20 -      loadFlashes();
+       21 -    }, [loadFlashes]);
+       18 +    // 初始化同步
+       19 +    useSync();
+       20    
+       21 -    // 处理提交
+       22 -    const handleSubmit = (content: string) => {
+       23 -      addFlash(content);
+       24 -    };
+       25 -  
+       21      // 过滤灵感
+       22 -    const filteredFlashes = flashes.filter(f => {
+       23 -      if (activeTab === 'incubating') return f.status === 
+          - 'incubating';
+       24 -      if (activeTab === 'surfaced') return f.status === 
+          - 'surfaced';
+       25 -      if (activeTab === 'archived') return f.status === 
+          - 'archived';
+       26 -      return true;
+       27 -    });
+       22 +    const filteredFlashes =
+       23 +      activeTab === 'incubating' ? getIncubating() :
+       24 +      activeTab === 'surfaced' ? getSurfaced() :
+       25 +      getArchived();
+       26    
+       27      // 统计数量
+       28      const counts = {
+       29 -      incubating: flashes.filter(f => f.status === 
+          - 'incubating').length,
+       30 -      surfaced: flashes.filter(f => f.status === 
+          - 'surfaced').length,
+       31 -      archived: flashes.filter(f => f.status === 
+          - 'archived').length,
+       29 +      incubating: getIncubating().length,
+       30 +      surfaced: getSurfaced().length,
+       31 +      archived: getArchived().length,
+       32      };
+       33    
+       34 -    if (!isLoaded) {
+       34 +    if (isLoading) {
+       35        return (
+       36          <main className="min-h-screen flex items-center 
+            justify-center">
+       37            <div className="text-gray-400">加载中...</div>
+     ...
+       52          {/* 头部 */}
+       53          <header className="max-w-2xl mx-auto mb-8 
+            text-center">
+       54            <h1 className="text-2xl font-bold text-gray-800">
+       55 -            ⚡ ResearchFlash
+       55 +            ResearchFlash
+       56            </h1>
+       57            <p className="mt-1 text-sm text-gray-500">
+       58              你的第二海马体：零摩擦捕捉，算法化重现
+       59            </p>
+       60          </header>
+       61    
+       62 -        {/* 输入区域 - 首屏核心 */}
+       62 +        {/* 输入区域 - 首屏核心 @R1 */}
+       63          <section className="mb-8">
+       64 -          <FlashInput onSubmit={handleSubmit} />
+       64 +          <FlashInput />
+       65          </section>
+       66    
+       67          {/* 标签切换 */}
+
+⏺ Read(src/components/FlashList.tsx)
+  ⎿  Read 44 lines
+
+⏺ Read(src/components/FlashCard.tsx)
+  ⎿  Read 81 lines
+
+⏺ Update(src/components/FlashCard.tsx)
+  ⎿  Updated src/components/FlashCard.tsx with 8 additions and 2 removals
+       25        archived: '已归档',
+       26      };
+       27    
+       28 -    const formatDate = (date: Date) => {
+       28 +    const formatDate = (date: Date | string) => {
+       29 +      const d = typeof date === 'string' ? new Date(date) : 
+          + date;
+       30        return new Intl.DateTimeFormat('zh-CN', {
+       31          month: 'short',
+       32          day: 'numeric',
+       33          hour: '2-digit',
+       34          minute: '2-digit',
+       35 -      }).format(date);
+       35 +      }).format(d);
+       36      };
+       37    
+       38 +    const getISOString = (date: Date | string) => {
+       39 +      const d = typeof date === 'string' ? new Date(date) : 
+          + date;
+       40 +      return d.toISOString();
+       41 +    };
+       42 +  
+       43      return (
+       44        <article
+       45          className="p-4 bg-white rounded-xl border 
+            border-gray-100 shadow-sm
+
+⏺ Update(src/components/FlashCard.tsx)
+  ⎿  Updated src/components/FlashCard.tsx with 1 addition and 1 removal
+       57            <div className="flex items-center gap-2">
+       58              {/* 时间 */}
+       59              <time
+       60 -              dateTime={flash.createdAt.toISOString()}
+       60 +              dateTime={getISOString(flash.createdAt)}
+       61                className="text-sm text-gray-400"
+       62              >
+       63                {formatDate(flash.createdAt)}
+
+⏺ Bash(rm /Users/kasierlee/Library/CloudStorage/Dropbox/B.MyLearn/1.AI产品研发训
+      练营/0.Meta/课程作业/project-template-student/src/lib/storage.ts)
+  ⎿  (No content)
+
+⏺ Bash(bun run dev)
+  ⎿  Running in the background (↓ to manage)
+
+⏺ Task Output(non-blocking) b5c2850
+  ⎿  [stderr] $ next dev --turbopack                      
+     [stderr]  ⚠ Port 3000 is in use, trying 3001 instead.
+        ▲ Next.js 15.1.0 (Turbopack)
+     … +5 lines (ctrl+o to expand)
+
+⏺ 服务器已启动在 http://localhost:3001。让我运行类型检查确保没有错误。
+
+⏺ Bash(bun run build 2>&1 | head -50)
+  ⎿  $ next build                  
+        ▲ Next.js 15.1.0
+     … +17 lines (ctrl+o to expand)
+
+⏺ 构建错误来自 notes 目录中的示例文件，不是我们的代码。让我检查 tsconfig.json 是否需要排除该目录。
+
+⏺ Read(tsconfig.json)
+  ⎿  Read 28 lines
+
+⏺ Update(tsconfig.json)
+  ⎿  Updated tsconfig.json with 1 addition and 1 removal           
+       23        }
+       24      },
+       25      "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", 
+            ".next/types/**/*.ts"],
+       26 -    "exclude": ["node_modules"]
+       26 +    "exclude": ["node_modules", "notes"]
+       27    }
+
+⏺ Bash(bun run build 2>&1 | head -80)
+  ⎿  $ next build                  
+        ▲ Next.js 15.1.0
+     … +17 lines (ctrl+o to expand)
+
+⏺ 服务端数据库在 Next.js 构建中有问题（bun:sqlite 是 Bun 特有的）。由于 spec.md 强调"离线优先架构"，让我简化 API 路由，使用内存存储作为 MVP 方案。
+
+⏺ Write(src/lib/db/index.ts)
+  ⎿  Updated src/lib/db/index.ts with 30 additions and 22 removals       
+        1    // lib/db/index.ts
+        2    // @source: spec.md
+        3 +  // MVP: 使用内存存储，离线优先架构中 IndexedDB 是主要存储
+        4    
+        5 -  import { drizzle } from 'drizzle-orm/bun-sqlite';
+        6 -  import { Database } from 'bun:sqlite';
+        7 -  import * as schema from './schema';
+        5 +  import type { Flash, FlashStatus } from '@/types/flash';
+        6    
+        7 -  const sqlite = new Database('researchflash.db');
+        8 -  export const db = drizzle(sqlite, { schema });
+        7 +  // 内存存储（MVP阶段）
+        8 +  const flashStore = new Map<string, Flash>();
+        9    
+       10 -  // 初始化数据库表
+       11 -  sqlite.run(`
+       12 -    CREATE TABLE IF NOT EXISTS flashes (
+       13 -      id TEXT PRIMARY KEY,
+       14 -      content TEXT NOT NULL,
+       15 -      status TEXT NOT NULL DEFAULT 'incubating',
+       16 -      device_id TEXT NOT NULL,
+       17 -      created_at INTEGER NOT NULL,
+       18 -      synced_at INTEGER
+       19 -    )
+       20 -  `);
+       10 +  export const db = {
+       11 +    flashes: {
+       12 +      create: async (flash: Flash): Promise<Flash> => {
+       13 +        flashStore.set(flash.id, flash);
+       14 +        return flash;
+       15 +      },
+       16    
+       17 -  sqlite.run(`
+       18 -    CREATE TABLE IF NOT EXISTS users (
+       19 -      device_id TEXT PRIMARY KEY,
+       20 -      created_at INTEGER NOT NULL
+       21 -    )
+       22 -  `);
+       17 +      getByDevice: async (deviceId: string): Promise<Flash[]> 
+          + => {
+       18 +        return Array.from(flashStore.values()).filter(f => 
+          + f.deviceId === deviceId);
+       19 +      },
+       20 +  
+       21 +      getByStatus: async (status: FlashStatus): 
+          + Promise<Flash[]> => {
+       22 +        return Array.from(flashStore.values()).filter(f => 
+          + f.status === status);
+       23 +      },
+       24 +  
+       25 +      update: async (id: string, data: Partial<Flash>): 
+          + Promise<void> => {
+       26 +        const existing = flashStore.get(id);
+       27 +        if (existing) {
+       28 +          flashStore.set(id, { ...existing, ...data });
+       29 +        }
+       30 +      },
+       31 +  
+       32 +      upsert: async (flash: Flash): Promise<void> => {
+       33 +        flashStore.set(flash.id, flash);
+       34 +      },
+       35 +    },
+       36 +  };
+
+⏺ Write(src/services/flash.service.ts)
+  ⎿  Updated src/services/flash.service.ts with 11 additions and 66 removal
+
+       2    // @source: spec.md
+       3    
+       4    import { db } from '@/lib/db';
+       5 -  import { flashes } from '@/lib/db/schema';
+       6 -  import { eq } from 'drizzle-orm';
+       5    import type { Flash, FlashStatus } from '@/types/flash';
+       6    
+       7    function generateFlashId(date: Date = new Date()): string {
+     ...
+       20        const now = new Date();
+       21        const id = generateFlashId(now);
+       22    
+       23 -      await db.insert(flashes).values({
+       23 +      const flash: Flash = {
+       24          id,
+       25          content: input.content,
+       26          status: 'incubating',
+       27          deviceId: input.deviceId,
+       28          createdAt: now,
+       29          syncedAt: now,
+       30 -      });
+       31 -  
+       32 -      return {
+       33 -        id,
+       34 -        content: input.content,
+       35 -        status: 'incubating',
+       36 -        deviceId: input.deviceId,
+       37 -        createdAt: now,
+       38 -        syncedAt: now,
+       30        };
+       31 +  
+       32 +      await db.flashes.create(flash);
+       33 +      return flash;
+       34      },
+       35    
+       36      async getFlashesByDevice(deviceId: string): 
+            Promise<Flash[]> {
+       37 -      const results = await db
+       38 -        .select()
+       39 -        .from(flashes)
+       40 -        .where(eq(flashes.deviceId, deviceId));
+       41 -  
+       42 -      return results.map(r => ({
+       43 -        id: r.id,
+       44 -        content: r.content,
+       45 -        status: r.status as FlashStatus,
+       46 -        deviceId: r.deviceId,
+       47 -        createdAt: r.createdAt,
+       48 -        syncedAt: r.syncedAt,
+       49 -      }));
+       37 +      return db.flashes.getByDevice(deviceId);
+       38      },
+       39    
+       40      async getSurfacedFlashes(): Promise<Flash[]> {
+       41 -      const results = await db
+       42 -        .select()
+       43 -        .from(flashes)
+       44 -        .where(eq(flashes.status, 'surfaced'));
+       45 -  
+       46 -      return results.map(r => ({
+       47 -        id: r.id,
+       48 -        content: r.content,
+       49 -        status: r.status as FlashStatus,
+       50 -        deviceId: r.deviceId,
+       51 -        createdAt: r.createdAt,
+       52 -        syncedAt: r.syncedAt,
+       53 -      }));
+       41 +      return db.flashes.getByStatus('surfaced');
+       42      },
+       43    
+       44      async updateFlashStatus(id: string, status: FlashStatus): 
+            Promise<void> {
+       45 -      await db
+       46 -        .update(flashes)
+       47 -        .set({ status })
+       48 -        .where(eq(flashes.id, id));
+       45 +      await db.flashes.update(id, { status });
+       46      },
+       47    
+       48      async syncFlash(flash: Flash): Promise<void> {
+       49 -      const existing = await db
+       50 -        .select()
+       51 -        .from(flashes)
+       52 -        .where(eq(flashes.id, flash.id));
+       53 -  
+       54 -      if (existing.length === 0) {
+       55 -        await db.insert(flashes).values({
+       56 -          id: flash.id,
+       57 -          content: flash.content,
+       58 -          status: flash.status,
+       59 -          deviceId: flash.deviceId,
+       60 -          createdAt: flash.createdAt,
+       61 -          syncedAt: new Date(),
+       62 -        });
+       63 -      } else {
+       64 -        await db
+       65 -          .update(flashes)
+       66 -          .set({
+       67 -            content: flash.content,
+       68 -            status: flash.status,
+       69 -            syncedAt: new Date(),
+       70 -          })
+       71 -          .where(eq(flashes.id, flash.id));
+       72 -      }
+       49 +      await db.flashes.upsert({
+       50 +        ...flash,
+       51 +        syncedAt: new Date(),
+       52 +      });
+       53      },
+       54    };
+
+⏺ Bash(bun run build 2>&1 | head -100)
+  ⎿  $ next build                  
+        ▲ Next.js 15.1.0
+     … +25 lines (ctrl+o to expand)
+
+⏺ Task Output(non-blocking) b5c2850
+  ⎿  [stderr] $ next dev --turbopack                      
+     [stderr]  ⚠ Port 3000 is in use, trying 3001 instead.
+        ▲ Next.js 15.1.0 (Turbopack)
+     … +5 lines (ctrl+o to expand)
+
+⏺ 重构完成
+
+  按照 spec.md 的要求，已完成 ResearchFlash 的完整重构。以下是变更摘要：
+
+  新增/重构的文件
+
+  | 文件路径                       | 说明                                                    |
+  |--------------------------------|---------------------------------------------------------|
+  | src/types/flash.ts             | 更新类型定义，新增 deviceId、syncedAt、OfflineQueueItem |
+  | src/lib/offline/idb.ts         | IndexedDB 操作模块 (@R4)                                |
+  | src/hooks/useOffline.ts        | 离线状态检测 (@R4)                                      |
+  | src/hooks/useSync.ts           | 同步队列逻辑 (@R4)                                      |
+  | src/hooks/useFlash.ts          | 重构为使用 IndexedDB                                    |
+  | src/components/CharCounter.tsx | 字数计数器组件 (@R2)                                    |
+  | src/components/FlashInput.tsx  | 重构，集成离线提示 (@R1, @R2)                           |
+  | src/app/api/flash/route.ts     | Flash CRUD API                                          |
+  | src/app/api/sync/route.ts      | 离线同步 API (@R4)                                      |
+  | src/lib/db/schema.ts           | Drizzle ORM schema                                      |
+  | src/lib/db/index.ts            | 内存存储（MVP）                                         |
+  | src/services/flash.service.ts  | Flash 业务逻辑                                          |
+  | src/app/page.tsx               | 更新为使用新的 hooks                                    |
+
+  约束实现情况
+
+  | 约束                   | 状态 | 实现方式                                |
+  |------------------------|------|-----------------------------------------|
+  | @R1 首屏直接展示输入框 | ✅   | FlashInput 直接渲染，useEffect 自动聚焦 |
+  | @R2 280字限制          | ✅   | 前端 CharCounter + 后端 zod 校验        |
+  | @R4 离线写入同步       | ✅   | IndexedDB + useSync hook                |
+
+  运行方式
+
+  开发服务器已在后台运行：http://localhost:3001
+
+  构建成功，所有 TypeScript 类型检查通过。
+
+> [Image #1]未成功运行 
+
+⏺ 让我检查错误日志。
+
+⏺ Read(/tmp/claude/tasks/b5c2850.output)
+  ⎿  Read 246 lines
+
+⏺ 这是 Dropbox 云同步与 Next.js 缓存冲突的问题。让我清理缓存并重启。
+
+⏺ Kill Shell(Kill shell: b5c2850)
+  ⎿  Shell b5c2850 killed
+
+⏺ Bash(rm -rf "/Users/kasierlee/Library/CloudStorage/Dropbox/B.MyLearn/1.AI产品
+      研发训练营/0.Meta/课程作业/project-template-student/.next")
+  ⎿  (No content)
+
+⏺ Read(package.json)
+  ⎿  Read 35 lines
+
+⏺ Update(package.json)
+  ⎿  Updated package.json with 1 addition and 1 removal
+       3      "version": "0.1.0",
+       4      "private": true,
+       5      "scripts": {
+       6 -      "dev": "next dev --turbopack",
+       6 +      "dev": "next dev",
+       7        "build": "next build",
+       8        "start": "next start",
+       9        "lint": "next lint"
+
+⏺ Bash(bun run dev)
+  ⎿  Running in the background (↓ to manage)
+
+⏺ Task Output(non-blocking) b6b402e
+  ⎿  [stderr] $ next dev                                  
+     [stderr]  ⚠ Port 3000 is in use, trying 3001 instead.
+        ▲ Next.js 15.1.0
+     … +5 lines (ctrl+o to expand)
+
+⏺ 服务器已启动。请刷新页面 http://localhost:3001 查看效果。
+
+⏺ Task Output(non-blocking) b6b402e
+  ⎿  [stderr] $ next dev                                  
+     [stderr]  ⚠ Port 3000 is in use, trying 3001 instead.
+        ▲ Next.js 15.1.0
+     … +5 lines (ctrl+o to expand)
+
+⏺ Bash(sleep 3 && cat /tmp/claude/tasks/b6b402e.output | tail -30) timeout: 15s
+  ⎿  [stderr] $ next dev                                  
+     [stderr]  ⚠ Port 3000 is in use, trying 3001 instead.
+        ▲ Next.js 15.1.0
+     … +5 lines (ctrl+o to expand)
+
+⏺ Bash(curl -s http://localhost:3001 | head -50) timeout: 30s
+  ⎿ <!DOCTYPE html><html lang="zh-CN"><head><meta charSet="utf-8"/><meta na
+    me="viewport" content="width=device-width, initial-scale=1"/><link rel=
+    "stylesheet" href="/_next/static/css/app/layout.css?v=1766477109287" da
+    … +408 lines (ctrl+o to expand)
+
+
+
+
+⏺ 页面已成功加载！让我检查编译日志确认没有错误。
+
+⏺ Read(/tmp/claude/tasks/b6b402e.output)
+  ⎿  Read 13 lines
+
+⏺ 编译成功，没有错误！服务器运行在 http://localhost:3001
+
+  请刷新浏览器页面查看效果。页面应该显示：
+  - 顶部标题 "ResearchFlash"
+  - 输入框（自动聚焦）
+  - 字数计数器
+  - 三个标签：孵化中 / 待回顾 / 已归档
+
+  如果仍然显示 "missing required error components"，请尝试：
+  1. 关闭浏览器标签页
+  2. 重新打开 http://localhost:3001
+
+> 描述：
+- 完成了XXX功能
+- 实现了XXX需求
+- 遇到的问题和解决方案...##请帮助补充上述三个内容，简洁和准确 
+
+⏺ 作业完成情况
+
+  完成了以下功能
+
+  - 灵感输入组件（FlashInput）：280字限制、实时字数统计、离线状态提示
+  - 灵感卡片展示（FlashCard）：状态标签、时间格式化、归档操作
+  - 离线存储系统：基于 IndexedDB 的本地持久化
+  - 同步队列机制：网络恢复后自动同步待发送数据
+  - API 路由：/api/flash（CRUD）、/api/sync（离线同步）
+
+  实现了以下需求（对应 real.md 约束）
+
+  | 约束                   | 实现方式                                             |
+  |------------------------|------------------------------------------------------|
+  | @R1 首屏直接展示输入框 | page.tsx 直接渲染 FlashInput，useEffect 自动聚焦     |
+  | @R2 单条灵感280字限制  | 前端 CharCounter 实时校验 + 后端 zod schema 二次校验 |
+  | @R4 离线写入自动同步   | IndexedDB 本地存储 + useSync hook 监听网络状态       |
+
+  遇到的问题和解决方案
+
+  | 问题                                        | 解决方案                                          |
+  |---------------------------------------------|---------------------------------------------------|
+  | Dropbox 云同步与 Next.js Turbopack 缓存冲突 | 禁用 Turbopack，改用标准 webpack 编译             |
+  | better-sqlite3 在 Bun 环境编译失败          | 改用内存存储作为 MVP 方案，IndexedDB 作为主存储   |
+  | bun:sqlite 模块在 Next.js 构建中不可用      | 简化服务端存储为 Map 内存存储，符合"离线优先"架构 |
+
+> /model 
+  ⎿  Kept model as opus
+
+
+
