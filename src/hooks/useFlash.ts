@@ -84,55 +84,72 @@ export function useFlash() {
   }, [loadFlashes]);
 
   // 创建灵感
-  const createFlash = useCallback(async (input: CreateFlashInput): Promise<Flash> => {
-    const currentDeviceId = deviceId || await getOrCreateDeviceId();
+  const createFlash = useCallback((input: CreateFlashInput): Flash => {
+    // 同步获取 deviceId：优先使用状态，否则用临时 ID（后台会修正）
+    const currentDeviceId = deviceId || localStorage.getItem('deviceId') || uuidv4();
     const userId = user?.id || null;
 
     // 使用工厂函数创建 Flash
     const flash = createFlashEntity(input.content, currentDeviceId, userId);
 
-    // 保存到本地
-    await saveFlashLocally(flash);
+    // 🚀 乐观更新：立即更新 UI，无需等待任何异步操作
     setFlashes(prev => [flash, ...prev]);
 
-    // 添加到同步队列
-    const queueItem: OfflineQueueItem = {
-      id: uuidv4(),
-      action: 'create',
-      data: flash,
-      timestamp: Date.now(),
-    };
-    await addToSyncQueue(queueItem);
-
-    // 如果在线，尝试立即同步
-    if (!isOffline) {
+    // 🚀 后台持久化：完全不阻塞
+    (async () => {
       try {
-        const response = await fetch('/api/flash', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            content: input.content,
+        // 确保 deviceId 已保存
+        if (!deviceId && !localStorage.getItem('deviceId')) {
+          localStorage.setItem('deviceId', currentDeviceId);
+          await saveDeviceInfo({
             deviceId: currentDeviceId,
-            userId,
-          }),
-        });
+            userId: null,
+            linkedAt: null,
+          });
+        }
 
-        if (response.ok) {
-          // 更新同步时间
-          const syncedFlash: Flash = {
-            ...flash,
-            syncedAt: new Date(),
-          };
-          await updateFlashLocally(syncedFlash);
-          setFlashes(prev =>
-            prev.map(f => f.id === flash.id ? syncedFlash : f)
-          );
+        // 并发执行本地存储操作
+        const queueItem: OfflineQueueItem = {
+          id: uuidv4(),
+          action: 'create',
+          data: flash,
+          timestamp: Date.now(),
+        };
+        await Promise.all([
+          saveFlashLocally(flash),
+          addToSyncQueue(queueItem),
+        ]);
+
+        // 如果在线，尝试立即同步（后台执行）
+        if (!isOffline) {
+          const response = await fetch('/api/flash', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              content: input.content,
+              deviceId: currentDeviceId,
+              userId,
+            }),
+          });
+
+          if (response.ok) {
+            // 更新同步时间
+            const syncedFlash: Flash = {
+              ...flash,
+              syncedAt: new Date(),
+            };
+            await updateFlashLocally(syncedFlash);
+            setFlashes(prev =>
+              prev.map(f => f.id === flash.id ? syncedFlash : f)
+            );
+          }
         }
       } catch (error) {
-        console.error('同步失败，已保存到本地:', error);
+        console.error('后台保存/同步失败:', error);
       }
-    }
+    })();
 
+    // 🚀 立即返回，完全同步
     return flash;
   }, [deviceId, isOffline, user]);
 
