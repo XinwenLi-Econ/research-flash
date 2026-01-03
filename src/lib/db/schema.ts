@@ -15,6 +15,8 @@ export const users = pgTable('users', {
   email: text('email').notNull().unique(),
   emailVerified: boolean('email_verified').notNull().default(false),
   image: text('image'),
+  timezone: text('timezone').default('Asia/Shanghai'), // 用户时区，用于本地化推送
+  lastDigestSentAt: timestamp('last_digest_sent_at', { withTimezone: true }), // 上次周报发送时间
   createdAt: timestamp('created_at', { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp('updated_at', { withTimezone: true }).notNull().defaultNow(),
 });
