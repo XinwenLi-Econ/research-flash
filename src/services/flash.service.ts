@@ -4,7 +4,7 @@
 
 import { db } from '@/lib/db';
 import { flashes, devices } from '@/lib/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
+import { eq, and, desc, lt } from 'drizzle-orm';
 import type { Flash, FlashStatus } from '@/types/flash';
 
 function generateFlashId(date: Date = new Date()): string {
@@ -203,5 +203,43 @@ export const flashService = {
     await db.update(flashes)
       .set({ status: 'archived', updatedAt: now, version: now })
       .where(eq(flashes.id, id));
+  },
+
+  /**
+   * 自动 Surface 过期灵感
+   * 将创建时间超过 7 天且状态为 incubating 的灵感更新为 surfaced
+   */
+  async autoSurfaceExpiredFlashes(): Promise<number> {
+    const now = new Date();
+    const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+
+    const result = await db.update(flashes)
+      .set({
+        status: 'surfaced',
+        updatedAt: now,
+        version: now
+      })
+      .where(and(
+        eq(flashes.status, 'incubating'),
+        lt(flashes.createdAt, sevenDaysAgo)
+      ))
+      .returning();
+
+    return result.length;
+  },
+
+  /**
+   * 获取用户的待回顾灵感
+   */
+  async getSurfacedFlashesByUser(userId: string): Promise<Flash[]> {
+    const records = await db.select()
+      .from(flashes)
+      .where(and(
+        eq(flashes.userId, userId),
+        eq(flashes.status, 'surfaced')
+      ))
+      .orderBy(desc(flashes.createdAt));
+
+    return records.map(toFlash);
   },
 };
