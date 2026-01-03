@@ -1,9 +1,9 @@
 // hooks/useFlash.ts
 // @source: cog.md, real.md R4
-// Flash Hook - 支持跨设备同步
+// Flash Hook - 支持跨设备同步，使用 Zustand 全局状态
 'use client';
 
-import { useState, useCallback, useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { v4 as uuidv4 } from 'uuid';
 import {
   Flash,
@@ -21,6 +21,7 @@ import {
 } from '@/lib/offline/idb';
 import { useOffline } from './useOffline';
 import { useAuth } from './useAuth';
+import { useFlashStore } from '@/stores/flashStore';
 
 /**
  * 获取或创建设备ID
@@ -51,16 +52,28 @@ async function getOrCreateDeviceId(): Promise<string> {
 }
 
 export function useFlash() {
-  const [flashes, setFlashes] = useState<Flash[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [deviceId, setDeviceId] = useState<string>('');
+  // 使用 Zustand 全局状态
+  const {
+    flashes,
+    isLoading,
+    deviceId,
+    setFlashes,
+    addFlash,
+    updateFlash,
+    removeFlash,
+    setIsLoading,
+    setDeviceId,
+  } = useFlashStore();
+
   const { isOffline } = useOffline();
-  const { user, isAuthenticated } = useAuth();
+  const { user } = useAuth();
 
   // 初始化设备ID
   useEffect(() => {
-    getOrCreateDeviceId().then(setDeviceId);
-  }, []);
+    if (!deviceId) {
+      getOrCreateDeviceId().then(setDeviceId);
+    }
+  }, [deviceId, setDeviceId]);
 
   // 加载灵感
   const loadFlashes = useCallback(async () => {
@@ -76,14 +89,16 @@ export function useFlash() {
     } finally {
       setIsLoading(false);
     }
-  }, []);
+  }, [setFlashes, setIsLoading]);
 
-  // 初始加载
+  // 初始加载（只加载一次）
   useEffect(() => {
-    loadFlashes();
-  }, [loadFlashes]);
+    if (isLoading && flashes.length === 0) {
+      loadFlashes();
+    }
+  }, [isLoading, flashes.length, loadFlashes]);
 
-  // 创建灵感
+  // 创建灵感 - 同步函数，立即返回
   const createFlash = useCallback((input: CreateFlashInput): Flash => {
     // 同步获取 deviceId：优先使用状态，否则用临时 ID（后台会修正）
     const currentDeviceId = deviceId || localStorage.getItem('deviceId') || uuidv4();
@@ -92,8 +107,8 @@ export function useFlash() {
     // 使用工厂函数创建 Flash
     const flash = createFlashEntity(input.content, currentDeviceId, userId);
 
-    // 🚀 乐观更新：立即更新 UI，无需等待任何异步操作
-    setFlashes(prev => [flash, ...prev]);
+    // 🚀 乐观更新：立即更新全局状态，所有组件同时更新
+    addFlash(flash);
 
     // 🚀 后台持久化：完全不阻塞
     (async () => {
@@ -139,9 +154,7 @@ export function useFlash() {
               syncedAt: new Date(),
             };
             await updateFlashLocally(syncedFlash);
-            setFlashes(prev =>
-              prev.map(f => f.id === flash.id ? syncedFlash : f)
-            );
+            updateFlash(flash.id, syncedFlash);
           }
         }
       } catch (error) {
@@ -151,7 +164,7 @@ export function useFlash() {
 
     // 🚀 立即返回，完全同步
     return flash;
-  }, [deviceId, isOffline, user]);
+  }, [deviceId, isOffline, user, addFlash, updateFlash]);
 
   // 归档灵感
   const archiveFlash = useCallback(async (id: string) => {
@@ -166,20 +179,25 @@ export function useFlash() {
       version: now,
     };
 
-    await updateFlashLocally(updatedFlash);
-    setFlashes(prev =>
-      prev.map(f => f.id === id ? updatedFlash : f)
-    );
+    // 乐观更新
+    updateFlash(id, updatedFlash);
 
-    // 添加到同步队列
-    const queueItem: OfflineQueueItem = {
-      id: uuidv4(),
-      action: 'update',
-      data: updatedFlash,
-      timestamp: Date.now(),
-    };
-    await addToSyncQueue(queueItem);
-  }, [flashes]);
+    // 后台持久化
+    (async () => {
+      try {
+        await updateFlashLocally(updatedFlash);
+        const queueItem: OfflineQueueItem = {
+          id: uuidv4(),
+          action: 'update',
+          data: updatedFlash,
+          timestamp: Date.now(),
+        };
+        await addToSyncQueue(queueItem);
+      } catch (error) {
+        console.error('归档失败:', error);
+      }
+    })();
+  }, [flashes, updateFlash]);
 
   // Surface 灵感（孵化完成）
   const surfaceFlash = useCallback(async (id: string) => {
@@ -194,20 +212,23 @@ export function useFlash() {
       version: now,
     };
 
-    await updateFlashLocally(updatedFlash);
-    setFlashes(prev =>
-      prev.map(f => f.id === id ? updatedFlash : f)
-    );
+    updateFlash(id, updatedFlash);
 
-    // 添加到同步队列
-    const queueItem: OfflineQueueItem = {
-      id: uuidv4(),
-      action: 'update',
-      data: updatedFlash,
-      timestamp: Date.now(),
-    };
-    await addToSyncQueue(queueItem);
-  }, [flashes]);
+    (async () => {
+      try {
+        await updateFlashLocally(updatedFlash);
+        const queueItem: OfflineQueueItem = {
+          id: uuidv4(),
+          action: 'update',
+          data: updatedFlash,
+          timestamp: Date.now(),
+        };
+        await addToSyncQueue(queueItem);
+      } catch (error) {
+        console.error('Surface 失败:', error);
+      }
+    })();
+  }, [flashes, updateFlash]);
 
   // 更新灵感内容
   const updateFlashContent = useCallback(async (id: string, content: string) => {
@@ -222,20 +243,23 @@ export function useFlash() {
       version: now,
     };
 
-    await updateFlashLocally(updatedFlash);
-    setFlashes(prev =>
-      prev.map(f => f.id === id ? updatedFlash : f)
-    );
+    updateFlash(id, updatedFlash);
 
-    // 添加到同步队列
-    const queueItem: OfflineQueueItem = {
-      id: uuidv4(),
-      action: 'update',
-      data: updatedFlash,
-      timestamp: Date.now(),
-    };
-    await addToSyncQueue(queueItem);
-  }, [flashes]);
+    (async () => {
+      try {
+        await updateFlashLocally(updatedFlash);
+        const queueItem: OfflineQueueItem = {
+          id: uuidv4(),
+          action: 'update',
+          data: updatedFlash,
+          timestamp: Date.now(),
+        };
+        await addToSyncQueue(queueItem);
+      } catch (error) {
+        console.error('更新失败:', error);
+      }
+    })();
+  }, [flashes, updateFlash]);
 
   // 删除灵感（软删除）
   const deleteFlash = useCallback(async (id: string) => {
@@ -252,22 +276,25 @@ export function useFlash() {
       version: now,
     };
 
-    await updateFlashLocally(deletedFlash);
-    setFlashes(prev =>
-      prev.map(f => f.id === id ? deletedFlash : f)
-    );
+    updateFlash(id, deletedFlash);
 
-    // 添加到同步队列
-    const queueItem: OfflineQueueItem = {
-      id: uuidv4(),
-      action: 'update',
-      data: deletedFlash,
-      timestamp: Date.now(),
-    };
-    await addToSyncQueue(queueItem);
+    (async () => {
+      try {
+        await updateFlashLocally(deletedFlash);
+        const queueItem: OfflineQueueItem = {
+          id: uuidv4(),
+          action: 'update',
+          data: deletedFlash,
+          timestamp: Date.now(),
+        };
+        await addToSyncQueue(queueItem);
+      } catch (error) {
+        console.error('删除失败:', error);
+      }
+    })();
 
     return deletedFlash;
-  }, [flashes]);
+  }, [flashes, updateFlash]);
 
   // 恢复灵感（从回收站恢复）
   const restoreFlash = useCallback(async (id: string) => {
@@ -284,43 +311,49 @@ export function useFlash() {
       version: now,
     };
 
-    await updateFlashLocally(restoredFlash);
-    setFlashes(prev =>
-      prev.map(f => f.id === id ? restoredFlash : f)
-    );
+    updateFlash(id, restoredFlash);
 
-    // 添加到同步队列
-    const queueItem: OfflineQueueItem = {
-      id: uuidv4(),
-      action: 'update',
-      data: restoredFlash,
-      timestamp: Date.now(),
-    };
-    await addToSyncQueue(queueItem);
+    (async () => {
+      try {
+        await updateFlashLocally(restoredFlash);
+        const queueItem: OfflineQueueItem = {
+          id: uuidv4(),
+          action: 'update',
+          data: restoredFlash,
+          timestamp: Date.now(),
+        };
+        await addToSyncQueue(queueItem);
+      } catch (error) {
+        console.error('恢复失败:', error);
+      }
+    })();
 
     return restoredFlash;
-  }, [flashes]);
+  }, [flashes, updateFlash]);
 
   // 永久删除灵感
   const permanentDeleteFlash = useCallback(async (id: string) => {
     const flash = flashes.find(f => f.id === id);
     if (!flash) return;
 
-    // 从 IndexedDB 中删除
-    const { deleteFlashLocally } = await import('@/lib/offline/idb');
-    await deleteFlashLocally(id);
+    removeFlash(id);
 
-    setFlashes(prev => prev.filter(f => f.id !== id));
-
-    // 添加到同步队列
-    const queueItem: OfflineQueueItem = {
-      id: uuidv4(),
-      action: 'delete',
-      data: flash,
-      timestamp: Date.now(),
-    };
-    await addToSyncQueue(queueItem);
-  }, [flashes]);
+    (async () => {
+      try {
+        const { deleteFlashLocally } = await import('@/lib/offline/idb');
+        await deleteFlashLocally(id);
+        const queueItem: OfflineQueueItem = {
+          id: uuidv4(),
+          action: 'delete',
+          data: flash,
+          timestamp: Date.now(),
+        };
+        await addToSyncQueue(queueItem);
+      } catch (error) {
+        console.error('永久删除失败:', error);
+      }
+    })();
+  }, [flashes, removeFlash]);
 
   // 按状态筛选
   const getFlashesByStatusLocal = useCallback((status: Flash['status']) => {
@@ -365,7 +398,7 @@ export function useFlash() {
       new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     );
     setFlashes(merged);
-  }, []);
+  }, [setFlashes]);
 
   return {
     flashes,
