@@ -26,3 +26,12 @@ yarn-error.log*
 .vscode/
 *.swp
 *.swo
+
+# Course materials (not part of the project)
+.42plugin/
+.42cog/
+chat/
+notes/
+source/
+docs/
+spec/
