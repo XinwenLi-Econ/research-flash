@@ -58,7 +58,7 @@ export function EmailVerificationBanner() {
                 请验证您的邮箱
               </span>
               <span className="text-amber-700 ml-1">
-                — 验证后可使用「忘记密码」功能找回账户
+                — 验证后可使用「每周灵感回顾」功能
               </span>
             </div>
           </div>
