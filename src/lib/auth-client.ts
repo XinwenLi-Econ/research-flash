@@ -6,22 +6,10 @@
 
 import { createAuthClient } from 'better-auth/react';
 
-// 运行时获取 baseURL，确保在浏览器中使用当前域名
-function getBaseURL() {
-  // 优先使用环境变量（构建时注入）
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return process.env.NEXT_PUBLIC_APP_URL;
-  }
-  // 浏览器环境：使用当前页面的 origin
-  if (typeof window !== 'undefined') {
-    return window.location.origin;
-  }
-  // 服务端回退
-  return 'http://localhost:3000';
-}
-
+// 使用空字符串让 better-auth 使用相对路径
+// 浏览器会自动基于当前域名发送请求
 export const authClient = createAuthClient({
-  baseURL: getBaseURL(),
+  baseURL: '',
 });
 
 // 导出常用方法
