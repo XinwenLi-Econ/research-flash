@@ -23,7 +23,16 @@ function createAuthDb() {
 }
 
 const authDb = createAuthDb();
-const appUrl = process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+// 获取应用 URL：优先使用 BETTER_AUTH_URL（运行时），然后 NEXT_PUBLIC_APP_URL，最后回退到 localhost
+const appUrl = process.env.BETTER_AUTH_URL || process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000';
+
+// 构建受信任的 origins 列表
+const trustedOriginsList = [
+  appUrl,
+  'https://flash.xinwen-li.com',  // 生产域名
+  'https://research-flash.vercel.app',  // Vercel 默认域名
+].filter((url, index, arr) => arr.indexOf(url) === index); // 去重
 
 export const auth = betterAuth({
   database: authDb ? drizzleAdapter(authDb, {
@@ -76,8 +85,8 @@ export const auth = betterAuth({
     },
   },
 
-  // 信任代理（用于获取正确的 IP 地址）
-  trustedOrigins: [appUrl],
+  // 信任的请求来源
+  trustedOrigins: trustedOriginsList,
 
   // 基础 URL 配置
   baseURL: appUrl,
