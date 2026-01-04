@@ -20,14 +20,20 @@ export const {
   useSession,
 } = authClient;
 
-// 发送验证邮件 - 通过直接 API 调用
-export async function sendVerificationEmail({ email }: { email: string }) {
-  const response = await fetch('/api/auth/send-verification-email', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
-  });
-  return response.json();
+// 发送验证邮件 - 使用 Better Auth 客户端内置方法
+export async function sendVerificationEmail({ email, callbackURL = '/' }: { email: string; callbackURL?: string }) {
+  console.log('[AuthClient] Sending verification email to:', email);
+  try {
+    const result = await authClient.sendVerificationEmail({
+      email,
+      callbackURL,
+    });
+    console.log('[AuthClient] sendVerificationEmail result:', result);
+    return result;
+  } catch (error) {
+    console.error('[AuthClient] sendVerificationEmail error:', error);
+    throw error;
+  }
 }
 
 // 修改密码 - 通过直接 API 调用
