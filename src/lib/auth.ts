@@ -49,11 +49,8 @@ export const auth = betterAuth({
   emailAndPassword: {
     enabled: true,
     autoSignIn: true,
-    // 邮箱验证配置
     requireEmailVerification: false, // 不强制验证，采用渐进式验证
-    sendVerificationEmail: true, // 注册后自动发送验证邮件
     sendResetPassword: async ({ user, url }) => {
-      // 密码重置邮件
       await sendPasswordResetEmail(user.email, url, user.name);
     },
   },
@@ -63,7 +60,12 @@ export const auth = betterAuth({
     sendOnSignUp: true, // 注册时自动发送
     autoSignInAfterVerification: true, // 验证后自动登录
     sendVerificationEmail: async ({ user, url }) => {
-      await sendVerificationEmail(user.email, url, user.name);
+      console.log('[Auth] Sending verification email to:', user.email);
+      const result = await sendVerificationEmail(user.email, url, user.name);
+      console.log('[Auth] Email send result:', result);
+      if (!result.success) {
+        throw new Error(result.error || 'Failed to send verification email');
+      }
     },
   },
 
