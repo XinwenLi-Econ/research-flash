@@ -51,6 +51,7 @@ export const auth = betterAuth({
     autoSignIn: true,
     requireEmailVerification: false, // 不强制验证，采用渐进式验证
     sendResetPassword: async ({ user, url }) => {
+      console.log('[Auth] Sending password reset email to:', user.email);
       await sendPasswordResetEmail(user.email, url, user.name);
     },
   },
@@ -60,12 +61,27 @@ export const auth = betterAuth({
     sendOnSignUp: true, // 注册时自动发送
     autoSignInAfterVerification: true, // 验证后自动登录
     sendVerificationEmail: async ({ user, url }) => {
-      console.log('[Auth] Sending verification email to:', user.email);
+      console.log('[Auth] sendVerificationEmail triggered for:', user.email);
+      console.log('[Auth] Verification URL:', url);
       const result = await sendVerificationEmail(user.email, url, user.name);
       console.log('[Auth] Email send result:', result);
       if (!result.success) {
         throw new Error(result.error || 'Failed to send verification email');
       }
+    },
+  },
+
+  // 数据库钩子 - 用户创建后发送验证邮件（作为 sendOnSignUp 的备用方案）
+  databaseHooks: {
+    user: {
+      create: {
+        after: async (user) => {
+          console.log('[Auth Hook] User created:', user.id, user.email);
+          // 如果 sendOnSignUp 没有触发，这里会作为备用
+          // 注意：这里不直接发送邮件，因为 sendVerificationEmail 需要验证 URL
+          // Better Auth 应该已经通过 emailVerification.sendVerificationEmail 发送了
+        },
+      },
     },
   },
 

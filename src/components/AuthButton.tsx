@@ -328,16 +328,6 @@ function AuthModal({ onClose, onSuccess }: AuthModalProps) {
           }
           return;
         }
-
-        // 注册成功后，主动发送验证邮件
-        try {
-          console.log('[Auth] 注册成功，发送验证邮件...');
-          await sendVerificationEmail({ email, callbackURL: window.location.origin });
-          console.log('[Auth] 验证邮件发送请求已提交');
-        } catch (emailError) {
-          console.error('[Auth] 发送验证邮件失败:', emailError);
-          // 不阻止注册流程，用户可以稍后重新发送
-        }
       }
 
       onSuccess();
