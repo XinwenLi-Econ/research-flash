@@ -300,7 +300,14 @@ function AuthModal({ onClose, onSuccess }: AuthModalProps) {
         });
 
         if (result.error) {
-          setError(result.error.message || '登录失败');
+          const msg = result.error.message || '登录失败';
+          if (msg.includes('credentials') || msg.includes('password')) {
+            setError('邮箱或密码错误');
+          } else if (msg.includes('not found') || msg.includes('user')) {
+            setError('该邮箱尚未注册');
+          } else {
+            setError(msg);
+          }
           return;
         }
       } else {
@@ -311,14 +318,29 @@ function AuthModal({ onClose, onSuccess }: AuthModalProps) {
         });
 
         if (result.error) {
-          setError(result.error.message || '注册失败');
+          const msg = result.error.message || '注册失败';
+          if (msg.includes('exists') || msg.includes('duplicate')) {
+            setError('该邮箱已被注册，请直接登录');
+          } else if (msg.includes('password')) {
+            setError('密码格式不正确，请使用至少 8 位密码');
+          } else {
+            setError(msg);
+          }
           return;
         }
       }
 
       onSuccess();
-    } catch {
-      setError('操作失败，请稍后重试');
+    } catch (err) {
+      console.error('[Auth] 操作失败:', err);
+      const msg = err instanceof Error ? err.message : '';
+      if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
+        setError('网络连接失败，请检查网络后重试');
+      } else if (msg.includes('timeout')) {
+        setError('请求超时，请稍后重试');
+      } else {
+        setError('操作失败，请稍后重试');
+      }
     } finally {
       setIsSubmitting(false);
     }
