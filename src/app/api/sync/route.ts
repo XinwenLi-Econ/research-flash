@@ -20,13 +20,16 @@ const syncItemSchema = z.object({
   data: z.object({
     id: z.string(),
     content: z.string().max(280),
-    status: z.enum(['incubating', 'surfaced', 'archived']),
+    status: z.enum(['incubating', 'surfaced', 'archived', 'deleted']),
     deviceId: z.string(),
     userId: z.string().nullable().optional(),
     createdAt: z.string().or(z.date()),
-    syncedAt: z.string().or(z.date()).nullable(),
+    syncedAt: z.string().or(z.date()).nullable().optional(),
     updatedAt: z.string().or(z.date()),
     version: z.string().or(z.date()),
+    // 软删除相关字段
+    deletedAt: z.string().or(z.date()).nullable().optional(),
+    previousStatus: z.enum(['incubating', 'surfaced', 'archived']).nullable().optional(),
   }),
   timestamp: z.number(),
 });
@@ -78,13 +81,15 @@ export async function POST(request: NextRequest) {
     const flash = {
       id: data.id,
       content: data.content,
-      status: data.status as 'incubating' | 'surfaced' | 'archived',
+      status: data.status as 'incubating' | 'surfaced' | 'archived' | 'deleted',
       deviceId: data.deviceId,
       userId: data.userId || null,
       createdAt: new Date(data.createdAt),
       syncedAt: data.syncedAt ? new Date(data.syncedAt) : null,
       updatedAt: new Date(data.updatedAt),
       version: new Date(data.version),
+      deletedAt: data.deletedAt ? new Date(data.deletedAt) : undefined,
+      previousStatus: data.previousStatus || undefined,
     };
 
     switch (action) {
