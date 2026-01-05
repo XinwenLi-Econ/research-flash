@@ -17,10 +17,12 @@ import {
 import type { Flash, SyncResponse } from '@/types/flash';
 import { resolveConflict } from '@/types/flash';
 import { apiUrl } from '@/lib/api-config';
+import { useFlashStore } from '@/stores/flashStore';
 
 export function useSync() {
   const { isOffline } = useOffline();
   const { user, isAuthenticated } = useAuth();
+  const { setFlashes } = useFlashStore();
   const [isSyncing, setIsSyncing] = useState(false);
   const [lastSyncAt, setLastSyncAt] = useState<Date | null>(null);
 
@@ -111,6 +113,14 @@ export function useSync() {
         console.log(`已解决 ${conflicts.length} 个冲突（LWW）`);
       }
 
+      // 🚀 关键：同步完成后更新 Zustand store，刷新 UI
+      const allFlashes = await getAllFlashes();
+      allFlashes.sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setFlashes(allFlashes);
+      console.log(`[Sync] 已同步 ${serverFlashes.length} 条灵感，本地共 ${allFlashes.length} 条`);
+
       setLastSyncAt(new Date());
       return serverFlashes;
     } catch (error) {
@@ -119,7 +129,7 @@ export function useSync() {
     } finally {
       setIsSyncing(false);
     }
-  }, [isAuthenticated, user, isOffline]);
+  }, [isAuthenticated, user, isOffline, setFlashes]);
 
   // 完整同步（Push + Pull）
   const fullSync = useCallback(async () => {
