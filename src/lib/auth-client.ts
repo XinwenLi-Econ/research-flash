@@ -10,6 +10,10 @@ import { getApiBaseUrl, apiUrl } from './api-config';
 // 创建 auth 客户端，原生应用使用绝对 URL
 export const authClient = createAuthClient({
   baseURL: getApiBaseUrl(),
+  // 显式配置 fetch，确保 Android WebView 正确携带 credentials
+  fetchOptions: {
+    credentials: 'include',
+  },
 });
 
 // 导出常用方法
