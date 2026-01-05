@@ -33,6 +33,7 @@ export function FlashCard({
 }: FlashCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [editContent, setEditContent] = useState(flash.content);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false); // 删除确认状态
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
   // 是否可编辑（仅 incubating 状态）
@@ -221,7 +222,7 @@ export function FlashCard({
           {/* 回收站视图：恢复和永久删除按钮 */}
           {isTrashView && flash.status === 'deleted' && (
             <div className="flex items-center gap-3">
-              {onRestore && (
+              {onRestore && !showDeleteConfirm && (
                 <button
                   onClick={() => onRestore(flash.id)}
                   className="text-sm text-blue-500 hover:text-blue-600 transition-colors"
@@ -229,17 +230,34 @@ export function FlashCard({
                   恢复
                 </button>
               )}
-              {onPermanentDelete && (
+              {onPermanentDelete && !showDeleteConfirm && (
                 <button
-                  onClick={() => {
-                    if (confirm('确定永久删除这条灵感吗？此操作不可恢复。')) {
-                      onPermanentDelete(flash.id);
-                    }
-                  }}
+                  onClick={() => setShowDeleteConfirm(true)}
                   className="text-sm text-red-400 hover:text-red-600 transition-colors"
                 >
                   永久删除
                 </button>
+              )}
+              {/* 内联确认对话框 - 兼容 iOS WebView */}
+              {showDeleteConfirm && (
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500">确定删除？</span>
+                  <button
+                    onClick={() => {
+                      onPermanentDelete?.(flash.id);
+                      setShowDeleteConfirm(false);
+                    }}
+                    className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                  >
+                    确定
+                  </button>
+                  <button
+                    onClick={() => setShowDeleteConfirm(false)}
+                    className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                  >
+                    取消
+                  </button>
+                </div>
               )}
             </div>
           )}
