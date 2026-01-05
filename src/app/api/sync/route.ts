@@ -68,13 +68,15 @@ export async function POST(request: NextRequest) {
 
     const { action, data } = validated.data;
 
-    // 如果数据包含 userId，需要验证 Session
+    // 如果数据包含 userId，尝试验证 Session
+    // 验证失败时降级为设备级同步（清除 userId）
+    let verifiedUserId: string | null = null;
     if (data.userId) {
       const authResult = await requireSession(request, data.userId);
-
-      if (!authResult.authenticated) {
-        return authResult.error;
+      if (authResult.authenticated) {
+        verifiedUserId = data.userId;
       }
+      // 未登录或认证失败时，以设备级数据处理
     }
 
     // 转换日期字段
@@ -83,7 +85,7 @@ export async function POST(request: NextRequest) {
       content: data.content,
       status: data.status as 'incubating' | 'surfaced' | 'archived' | 'deleted',
       deviceId: data.deviceId,
-      userId: data.userId || null,
+      userId: verifiedUserId,
       createdAt: new Date(data.createdAt),
       syncedAt: data.syncedAt ? new Date(data.syncedAt) : null,
       updatedAt: new Date(data.updatedAt),
