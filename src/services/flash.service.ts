@@ -206,6 +206,26 @@ export const flashService = {
   },
 
   /**
+   * 永久删除灵感（硬删除 - 从数据库移除）
+   */
+  async permanentDeleteFlash(id: string): Promise<void> {
+    await db.delete(flashes).where(eq(flashes.id, id));
+  },
+
+  /**
+   * 批量永久删除灵感（用于清空回收站）
+   */
+  async permanentDeleteFlashesByUser(userId: string, status: FlashStatus): Promise<number> {
+    const result = await db.delete(flashes)
+      .where(and(
+        eq(flashes.userId, userId),
+        eq(flashes.status, status)
+      ))
+      .returning();
+    return result.length;
+  },
+
+  /**
    * 自动 Surface 过期灵感
    * 将创建时间超过 7 天且状态为 incubating 的灵感更新为 surfaced
    */

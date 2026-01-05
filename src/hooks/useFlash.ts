@@ -357,6 +357,54 @@ export function useFlash() {
     })();
   }, [flashes, removeFlash]);
 
+  // 清空回收站（永久删除所有已删除的灵感）
+  const clearTrash = useCallback(async () => {
+    const deletedFlashes = flashes.filter(f => f.status === 'deleted');
+    if (deletedFlashes.length === 0) return 0;
+
+    // 乐观更新：立即从本地状态移除
+    for (const flash of deletedFlashes) {
+      removeFlash(flash.id);
+    }
+
+    // 后台处理
+    (async () => {
+      try {
+        const { deleteFlashLocally } = await import('@/lib/offline/idb');
+
+        // 本地删除
+        for (const flash of deletedFlashes) {
+          await deleteFlashLocally(flash.id);
+          const queueItem: OfflineQueueItem = {
+            id: uuidv4(),
+            action: 'delete',
+            data: flash,
+            timestamp: Date.now(),
+          };
+          await addToSyncQueue(queueItem);
+        }
+
+        // 如果已登录且在线，调用服务端批量删除
+        if (!isOffline && user?.id) {
+          try {
+            await fetch(apiUrl('/api/trash/clear'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({ userId: user.id }),
+            });
+          } catch (error) {
+            console.error('服务端清空回收站失败:', error);
+          }
+        }
+      } catch (error) {
+        console.error('清空回收站失败:', error);
+      }
+    })();
+
+    return deletedFlashes.length;
+  }, [flashes, removeFlash, isOffline, user]);
+
   // 按状态筛选
   const getFlashesByStatusLocal = useCallback((status: Flash['status']) => {
     return flashes.filter(f => f.status === status);
@@ -413,6 +461,7 @@ export function useFlash() {
     deleteFlash,
     restoreFlash,
     permanentDeleteFlash,
+    clearTrash,
     mergeRemoteFlashes,
     getIncubating: () => getFlashesByStatusLocal('incubating'),
     getSurfaced: () => getFlashesByStatusLocal('surfaced'),
