@@ -4,6 +4,7 @@
 
 import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { apiUrl } from '@/lib/api-config';
 
 function VerifyContent() {
   const searchParams = useSearchParams();
@@ -23,7 +24,7 @@ function VerifyContent() {
     // 调用验证 API
     const verifyEmail = async () => {
       try {
-        const response = await fetch(`/api/auth/verify-email?token=${encodeURIComponent(token)}`);
+        const response = await fetch(apiUrl(`/api/auth/verify-email?token=${encodeURIComponent(token)}`));
         const result = await response.json();
 
         if (!response.ok || result.error) {
