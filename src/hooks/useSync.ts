@@ -169,6 +169,29 @@ export function useSync() {
     }
   }, [isAuthenticated, isOffline]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // 🚀 页面可见时自动同步（切换回 app 时拉取最新数据）
+  useEffect(() => {
+    if (typeof document === 'undefined') return;
+
+    const handleVisibilityChange = () => {
+      if (
+        document.visibilityState === 'visible' &&
+        isAuthenticated &&
+        !isOffline &&
+        !syncInProgress.current
+      ) {
+        console.log('[Sync] 页面可见，开始同步...');
+        syncInProgress.current = true;
+        fullSync().finally(() => {
+          syncInProgress.current = false;
+        });
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isAuthenticated, isOffline, fullSync]);
+
   return {
     isSyncing,
     lastSyncAt,
