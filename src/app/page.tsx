@@ -116,7 +116,7 @@ export default function Home() {
       {/* 邮箱验证提示条 */}
       <EmailVerificationBanner />
 
-      <main className="min-h-screen py-8 px-4">
+      <main className="min-h-screen pt-[max(2rem,env(safe-area-inset-top))] pb-8 px-4">
         {/* 头部 */}
         <header className="max-w-2xl mx-auto mb-8">
         <div className="flex justify-end mb-4">
