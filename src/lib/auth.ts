@@ -105,6 +105,17 @@ export const auth = betterAuth({
     },
   },
 
+  // Cookie 配置 - 支持 Capacitor WebView 跨域
+  advanced: {
+    crossSubDomainCookies: {
+      enabled: true,
+    },
+    defaultCookieAttributes: {
+      sameSite: 'none',
+      secure: true,
+    },
+  },
+
   // 信任的请求来源
   trustedOrigins: trustedOriginsList,
 
