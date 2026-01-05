@@ -3,11 +3,14 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.researchflash.app',
   appName: 'ResearchFlash',
-  // 使用 Next.js 静态导出目录
-  webDir: 'out',
+  webDir: 'public',
   server: {
-    // 允许访问远程 API
-    allowNavigation: ['research-flash.vercel.app'],
+    url: 'https://flash.xinwen-li.com',
+    cleartext: true,
+  },
+  ios: {
+    // 启用 App Bound Domains 支持，配合 Info.plist 中的 WKAppBoundDomains
+    limitsNavigationsToAppBoundDomains: true,
   },
   plugins: {},
 };

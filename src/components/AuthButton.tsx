@@ -128,7 +128,13 @@ export function AuthButton() {
     <>
       <button
         onClick={() => setShowModal(true)}
-        className="text-sm text-blue-600 hover:text-blue-800 font-medium"
+        onTouchEnd={(e) => {
+          // iOS WebView 触摸事件兼容
+          e.preventDefault();
+          setShowModal(true);
+        }}
+        className="text-sm text-blue-600 hover:text-blue-800 font-medium cursor-pointer select-none touch-manipulation"
+        style={{ WebkitTapHighlightColor: 'transparent' }}
       >
         登录 / 注册
       </button>

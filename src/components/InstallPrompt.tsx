@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { isNative } from '@/lib/api-config';
 
 interface BeforeInstallPromptEvent extends Event {
   prompt: () => Promise<void>;
@@ -14,6 +15,11 @@ export function InstallPrompt() {
   const [showPrompt, setShowPrompt] = useState(false);
 
   useEffect(() => {
+    // 如果是原生应用（Capacitor），不显示 PWA 安装提示
+    if (isNative()) {
+      return;
+    }
+
     // 检查是否已经是 standalone 模式
     const standalone = window.matchMedia('(display-mode: standalone)').matches ||
                       (window.navigator as unknown as { standalone?: boolean }).standalone === true;
