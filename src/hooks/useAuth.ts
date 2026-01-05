@@ -121,9 +121,30 @@ export function useAuth(): AuthState & {
           });
         }
 
-        // 关联设备
+        // 关联设备（本地 + 服务端）
         if (deviceId) {
+          // 本地关联
           await linkDeviceToUser(session.user.id);
+
+          // 🚀 服务端关联：将设备的灵感关联到用户
+          try {
+            const response = await fetch(apiUrl('/api/device/link'), {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              credentials: 'include',
+              body: JSON.stringify({
+                deviceId,
+                userId: session.user.id,
+              }),
+            });
+            if (response.ok) {
+              const result = await response.json();
+              console.log(`[Auth] 设备关联成功，关联了 ${result.linkedFlashesCount} 条灵感`);
+            }
+          } catch (error) {
+            console.error('[Auth] 服务端设备关联失败:', error);
+            // 离线时忽略，下次登录重试
+          }
         }
       }
     }
