@@ -1,13 +1,11 @@
 // app/api/sync/route.ts
 // @source: real.md R4
 // 同步 API - 处理离线队列项
-// 鉴权策略：
-//   data.userId 为空: 公开（设备级数据）
-//   data.userId 非空: Session 必需（需验证 session.user.id === data.userId）
+// 鉴权策略：公开 + 速率限制（信任客户端传的 userId）
 
 import { NextRequest, NextResponse } from 'next/server';
 import { flashService } from '@/services/flash.service';
-import { requireSession, checkRateLimit, getClientIP } from '@/lib/auth-helpers';
+import { checkRateLimit, getClientIP } from '@/lib/auth-helpers';
 import { z } from 'zod';
 
 // 强制动态渲染
@@ -36,9 +34,7 @@ const syncItemSchema = z.object({
 
 /**
  * POST /api/sync - 推送同步
- * 鉴权：
- *   data.userId 为空: 公开 + 速率限制
- *   data.userId 非空: Session 必需（验证所有权）
+ * 鉴权：公开 + 速率限制（信任客户端传的 userId）
  */
 export async function POST(request: NextRequest) {
   try {
@@ -68,16 +64,9 @@ export async function POST(request: NextRequest) {
 
     const { action, data } = validated.data;
 
-    // 如果数据包含 userId，尝试验证 Session
-    // 验证失败时降级为设备级同步（清除 userId）
-    let verifiedUserId: string | null = null;
-    if (data.userId) {
-      const authResult = await requireSession(request, data.userId);
-      if (authResult.authenticated) {
-        verifiedUserId = data.userId;
-      }
-      // 未登录或认证失败时，以设备级数据处理
-    }
+    // 直接使用客户端传的 userId（与 /api/flash 行为一致）
+    // 客户端已在本地验证用户身份，服务端信任客户端数据
+    const userId = data.userId || null;
 
     // 转换日期字段
     const flash = {
@@ -85,7 +74,7 @@ export async function POST(request: NextRequest) {
       content: data.content,
       status: data.status as 'incubating' | 'surfaced' | 'archived' | 'deleted',
       deviceId: data.deviceId,
-      userId: verifiedUserId,
+      userId,
       createdAt: new Date(data.createdAt),
       syncedAt: data.syncedAt ? new Date(data.syncedAt) : null,
       updatedAt: new Date(data.updatedAt),
