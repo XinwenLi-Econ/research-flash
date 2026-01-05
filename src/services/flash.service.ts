@@ -4,7 +4,7 @@
 
 import { db } from '@/lib/db';
 import { flashes, devices } from '@/lib/db/schema';
-import { eq, and, desc, lt } from 'drizzle-orm';
+import { eq, and, desc, lt, isNull } from 'drizzle-orm';
 import type { Flash, FlashStatus } from '@/types/flash';
 
 function generateFlashId(date: Date = new Date()): string {
@@ -183,12 +183,12 @@ export const flashService = {
       .set({ userId })
       .where(eq(devices.id, deviceId));
 
-    // 更新该设备的所有灵感
+    // 更新该设备的所有灵感（userId 为 NULL 的）
     const result = await db.update(flashes)
       .set({ userId })
       .where(and(
         eq(flashes.deviceId, deviceId),
-        eq(flashes.userId, null as unknown as string) // 只更新未关联的
+        isNull(flashes.userId) // 🔧 使用 isNull 正确检查 NULL
       ))
       .returning();
 
