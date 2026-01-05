@@ -78,7 +78,7 @@ export function FlashInput() {
           请精简至280字内 {/* @R2 */}
         </div>
       )}
-      <div className="mt-2 text-sm text-gray-400">
+      <div className="mt-2 text-sm text-gray-400 hidden md:block">
         ⌘ + Enter 快速保存
       </div>
     </div>
