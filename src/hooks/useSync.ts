@@ -16,7 +16,7 @@ import {
 } from '@/lib/offline/idb';
 import type { Flash, SyncResponse } from '@/types/flash';
 import { resolveConflict } from '@/types/flash';
-import { apiUrl } from '@/lib/api-config';
+import { apiUrl, isNative } from '@/lib/api-config';
 import { useFlashStore } from '@/stores/flashStore';
 
 export function useSync() {
@@ -190,6 +190,41 @@ export function useSync() {
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
     return () => document.removeEventListener('visibilitychange', handleVisibilityChange);
+  }, [isAuthenticated, isOffline, fullSync]);
+
+  // 🚀 Capacitor 原生应用：监听应用恢复事件
+  useEffect(() => {
+    if (!isNative()) return;
+
+    let appListener: { remove: () => void } | null = null;
+
+    const setupAppListener = async () => {
+      try {
+        const { App } = await import('@capacitor/app');
+        appListener = await App.addListener('appStateChange', ({ isActive }) => {
+          if (
+            isActive &&
+            isAuthenticated &&
+            !isOffline &&
+            !syncInProgress.current
+          ) {
+            console.log('[Sync] 原生应用恢复，开始同步...');
+            syncInProgress.current = true;
+            fullSync().finally(() => {
+              syncInProgress.current = false;
+            });
+          }
+        });
+      } catch (error) {
+        console.error('[Sync] 无法监听应用状态:', error);
+      }
+    };
+
+    setupAppListener();
+
+    return () => {
+      appListener?.remove();
+    };
   }, [isAuthenticated, isOffline, fullSync]);
 
   return {
