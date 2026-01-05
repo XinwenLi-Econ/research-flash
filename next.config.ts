@@ -25,6 +25,7 @@ const nextConfig: NextConfig = {
   env: {
     DATABASE_URL: process.env.DATABASE_URL,
   },
+  // CORS 由 src/middleware.ts 处理
 };
 
 export default nextConfig;

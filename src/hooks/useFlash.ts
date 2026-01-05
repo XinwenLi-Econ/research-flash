@@ -141,6 +141,7 @@ export function useFlash() {
           const response = await fetch(apiUrl('/api/flash'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include', // 携带认证凭据
             body: JSON.stringify({
               content: input.content,
               deviceId: currentDeviceId,

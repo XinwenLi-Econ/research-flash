@@ -43,14 +43,17 @@ export function useSync() {
         const response = await fetch(apiUrl('/api/sync'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include', // 携带认证凭据
           body: JSON.stringify(item),
         });
 
         if (response.ok) {
           await clearSyncedItem(item.id);
+        } else {
+          console.error('同步响应错误:', response.status, response.statusText);
         }
       } catch (error) {
-        console.error('同步失败:', error);
+        console.error('同步失败:', error instanceof Error ? error.message : error);
         // 保留在队列中，下次重试
       }
     }
@@ -68,7 +71,8 @@ export function useSync() {
     try {
       const deviceInfo = await getDeviceInfo();
       const response = await fetch(
-        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`)
+        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`),
+        { credentials: 'include' }
       );
 
       if (!response.ok) {
