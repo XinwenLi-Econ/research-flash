@@ -27,6 +27,18 @@ yarn-error.log*
 *.swp
 *.swo
 
+# Mobile build artifacts
+*.apk
+*.ipa
+*.aab
+
+# Capacitor native builds
+android/.gradle/
+android/app/build/
+android/build/
+ios/App/build/
+ios/App/Pods/
+
 # Course materials (not part of the project)
 .42plugin/
 .42cog/

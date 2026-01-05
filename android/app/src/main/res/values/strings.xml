@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">ResearchFlash</string>
+    <string name="title_activity_main">ResearchFlash</string>
+    <string name="package_name">com.researchflash.app</string>
+    <string name="custom_url_scheme">com.researchflash.app</string>
+</resources>

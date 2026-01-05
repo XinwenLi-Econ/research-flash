@@ -4,6 +4,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { apiUrl } from '@/lib/api-config';
 
 export default function ForgotPasswordPage() {
   const router = useRouter();
@@ -18,7 +19,7 @@ export default function ForgotPasswordPage() {
 
     try {
       // 直接调用 API
-      const response = await fetch('/api/auth/forget-password', {
+      const response = await fetch(apiUrl('/api/auth/forget-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, redirectTo: '/auth/reset-password' }),

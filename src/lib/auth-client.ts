@@ -5,11 +5,11 @@
 'use client';
 
 import { createAuthClient } from 'better-auth/react';
+import { getApiBaseUrl, apiUrl } from './api-config';
 
-// 使用空字符串让 better-auth 使用相对路径
-// 浏览器会自动基于当前域名发送请求
+// 创建 auth 客户端，原生应用使用绝对 URL
 export const authClient = createAuthClient({
-  baseURL: '',
+  baseURL: getApiBaseUrl(),
 });
 
 // 导出常用方法
@@ -46,7 +46,7 @@ export async function changePassword({
   newPassword: string;
   revokeOtherSessions?: boolean;
 }) {
-  const response = await fetch('/api/auth/change-password', {
+  const response = await fetch(apiUrl('/api/auth/change-password'), {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({ currentPassword, newPassword, revokeOtherSessions }),

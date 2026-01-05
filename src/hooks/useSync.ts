@@ -16,6 +16,7 @@ import {
 } from '@/lib/offline/idb';
 import type { Flash, SyncResponse } from '@/types/flash';
 import { resolveConflict } from '@/types/flash';
+import { apiUrl } from '@/lib/api-config';
 
 export function useSync() {
   const { isOffline } = useOffline();
@@ -39,7 +40,7 @@ export function useSync() {
 
     for (const item of pendingItems) {
       try {
-        const response = await fetch('/api/sync', {
+        const response = await fetch(apiUrl('/api/sync'), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(item),
@@ -67,7 +68,7 @@ export function useSync() {
     try {
       const deviceInfo = await getDeviceInfo();
       const response = await fetch(
-        `/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`
+        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`)
       );
 
       if (!response.ok) {
