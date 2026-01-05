@@ -22,6 +22,7 @@ import {
 import { useOffline } from './useOffline';
 import { useAuth } from './useAuth';
 import { useFlashStore } from '@/stores/flashStore';
+import { apiUrl } from '@/lib/api-config';
 
 /**
  * 获取或创建设备ID
@@ -137,7 +138,7 @@ export function useFlash() {
 
         // 如果在线，尝试立即同步（后台执行）
         if (!isOffline) {
-          const response = await fetch('/api/flash', {
+          const response = await fetch(apiUrl('/api/flash'), {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({

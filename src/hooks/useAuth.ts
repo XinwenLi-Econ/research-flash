@@ -16,6 +16,7 @@ import {
 } from '@/lib/offline/idb';
 import type { AuthUser, AuthState } from '@/types/auth';
 import { v4 as uuidv4 } from 'uuid';
+import { apiUrl } from '@/lib/api-config';
 
 /**
  * 获取或创建设备ID
@@ -160,7 +161,7 @@ export function useAuth(): AuthState & {
 
     // 服务端关联
     try {
-      await fetch('/api/device/link', {
+      await fetch(apiUrl('/api/device/link'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({

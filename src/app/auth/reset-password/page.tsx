@@ -4,6 +4,7 @@
 
 import { useState, useEffect, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
+import { apiUrl } from '@/lib/api-config';
 
 function ResetPasswordContent() {
   const searchParams = useSearchParams();
@@ -50,7 +51,7 @@ function ResetPasswordContent() {
 
     try {
       // 直接调用 API
-      const response = await fetch('/api/auth/reset-password', {
+      const response = await fetch(apiUrl('/api/auth/reset-password'), {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newPassword: password, token }),
