@@ -333,13 +333,15 @@ function AuthModal({ onClose, onSuccess }: AuthModalProps) {
       onSuccess();
     } catch (err) {
       console.error('[Auth] 操作失败:', err);
-      const msg = err instanceof Error ? err.message : '';
+      const msg = err instanceof Error ? err.message : String(err);
+      // 显示详细错误信息以便调试
+      const debugInfo = `[调试] ${msg || '未知错误'}`;
       if (msg.includes('fetch') || msg.includes('network') || msg.includes('Failed to fetch')) {
-        setError('网络连接失败，请检查网络后重试');
+        setError(`网络连接失败: ${debugInfo}`);
       } else if (msg.includes('timeout')) {
-        setError('请求超时，请稍后重试');
+        setError(`请求超时: ${debugInfo}`);
       } else {
-        setError('操作失败，请稍后重试');
+        setError(`操作失败: ${debugInfo}`);
       }
     } finally {
       setIsSubmitting(false);
