@@ -1,7 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/ServiceWorkerRegister";
-import { InstallPrompt } from "@/components/InstallPrompt";
 
 export const viewport: Viewport = {
   width: 'device-width',
@@ -56,7 +55,6 @@ export default function RootLayout({
       <body className="antialiased min-h-screen bg-gray-50">
         <ServiceWorkerRegister />
         {children}
-        <InstallPrompt />
       </body>
     </html>
   );
