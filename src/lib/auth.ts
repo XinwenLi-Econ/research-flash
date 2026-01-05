@@ -32,6 +32,8 @@ const trustedOriginsList = [
   appUrl,
   'https://flash.xinwen-li.com',  // 生产域名
   'https://research-flash.vercel.app',  // Vercel 默认域名
+  'capacitor://localhost',  // iOS Capacitor WebView
+  'http://localhost',  // Android Capacitor WebView
 ].filter((url, index, arr) => arr.indexOf(url) === index); // 去重
 
 export const auth = betterAuth({

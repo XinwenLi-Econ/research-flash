@@ -3,11 +3,11 @@ import type { CapacitorConfig } from '@capacitor/cli';
 const config: CapacitorConfig = {
   appId: 'com.researchflash.app',
   appName: 'ResearchFlash',
-  webDir: 'public',
+  // 使用 Next.js 静态导出目录
+  webDir: 'out',
   server: {
-    // 使用托管的 Web 应用
-    url: 'https://research-flash.vercel.app',
-    cleartext: true,
+    // 允许访问远程 API
+    allowNavigation: ['research-flash.vercel.app'],
   },
   plugins: {},
 };
