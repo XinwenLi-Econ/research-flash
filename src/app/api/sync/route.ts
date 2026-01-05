@@ -89,7 +89,8 @@ export async function POST(request: NextRequest) {
         await flashService.syncFlash(flash);
         break;
       case 'delete':
-        await flashService.deleteFlash(flash.id);
+        // 永久删除（硬删除）- 从数据库移除
+        await flashService.permanentDeleteFlash(flash.id);
         break;
     }
 

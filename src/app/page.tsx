@@ -51,6 +51,7 @@ export default function Home() {
     deleteFlash,
     restoreFlash,
     permanentDeleteFlash,
+    clearTrash,
     updateFlashContent,
     getIncubating,
     getSurfaced,
@@ -63,6 +64,7 @@ export default function Home() {
     flash: Flash;
     show: boolean;
   } | null>(null);
+  const [showClearConfirm, setShowClearConfirm] = useState(false);
 
   // 初始化同步
   useSync();
@@ -87,6 +89,12 @@ export default function Home() {
   const dismissUndo = useCallback(() => {
     setUndoState(null);
   }, []);
+
+  // 清空回收站
+  const handleClearTrash = useCallback(async () => {
+    await clearTrash();
+    setShowClearConfirm(false);
+  }, [clearTrash]);
 
   // 过滤灵感
   const filteredFlashes =
@@ -174,6 +182,35 @@ export default function Home() {
 
       {/* 灵感列表 */}
       <section className="max-w-2xl mx-auto">
+        {/* 回收站操作栏 */}
+        {activeTab === 'deleted' && counts.deleted > 0 && (
+          <div className="mb-4 flex justify-end">
+            {!showClearConfirm ? (
+              <button
+                onClick={() => setShowClearConfirm(true)}
+                className="px-3 py-1.5 text-sm text-red-500 hover:text-red-600 hover:bg-red-50 rounded transition-colors"
+              >
+                清空回收站
+              </button>
+            ) : (
+              <div className="flex items-center gap-2 px-3 py-1.5 bg-red-50 rounded">
+                <span className="text-sm text-red-600">确定清空全部 {counts.deleted} 条灵感？</span>
+                <button
+                  onClick={handleClearTrash}
+                  className="px-2 py-1 text-xs bg-red-500 text-white rounded hover:bg-red-600 transition-colors"
+                >
+                  确定
+                </button>
+                <button
+                  onClick={() => setShowClearConfirm(false)}
+                  className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+                >
+                  取消
+                </button>
+              </div>
+            )}
+          </div>
+        )}
         <FlashList
           flashes={filteredFlashes}
           onArchive={archiveFlash}
