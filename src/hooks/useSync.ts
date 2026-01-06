@@ -233,8 +233,10 @@ export function useSync() {
     const wasAuthenticated = prevAuthState.current;
     prevAuthState.current = isAuthenticated;
 
-    // 只在从未登录 -> 已登录时触发一次
-    if (isAuthenticated && wasAuthenticated === false && !isOffline && !syncInProgress.current) {
+    // 🚀 修复：从未登录/初始状态 -> 已登录时触发同步
+    // wasAuthenticated === false 或 wasAuthenticated === null 都表示之前未登录
+    if (isAuthenticated && !wasAuthenticated && !isOffline && !syncInProgress.current) {
+      console.log('[Sync] 检测到登录，开始同步数据...');
       syncInProgress.current = true;
       pullFromServer().finally(() => {
         syncInProgress.current = false;
