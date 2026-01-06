@@ -65,19 +65,9 @@ export default function Home() {
     show: boolean;
   } | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
-  const [showResetConfirm, setShowResetConfirm] = useState(false);
 
   // 初始化同步
-  const { forceResetSync, isSyncing } = useSync();
-
-  // 处理强制重置同步
-  const handleForceReset = useCallback(async () => {
-    const success = await forceResetSync();
-    setShowResetConfirm(false);
-    if (success) {
-      console.log('强制重置同步成功');
-    }
-  }, [forceResetSync]);
+  useSync();
 
   // 处理删除（带撤销）
   const handleDelete = useCallback(async (id: string) => {
@@ -247,36 +237,6 @@ export default function Home() {
       <footer className="max-w-2xl mx-auto mt-12 text-center text-sm text-gray-400">
         <p>灵感会在 7 天后自动进入「待回顾」状态</p>
         <p className="mt-1">每周日晚 8 点推送本周灵感回顾</p>
-
-        {/* 重置同步按钮 */}
-        <div className="mt-6 pt-4 border-t border-gray-100">
-          {!showResetConfirm ? (
-            <button
-              onClick={() => setShowResetConfirm(true)}
-              disabled={isSyncing}
-              className="text-xs text-gray-300 hover:text-gray-500 transition-colors disabled:opacity-50"
-            >
-              {isSyncing ? '同步中...' : '数据不同步？点击重置'}
-            </button>
-          ) : (
-            <div className="flex items-center justify-center gap-2">
-              <span className="text-xs text-orange-500">确定清空本地数据并重新同步？</span>
-              <button
-                onClick={handleForceReset}
-                disabled={isSyncing}
-                className="px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors disabled:opacity-50"
-              >
-                {isSyncing ? '重置中...' : '确定'}
-              </button>
-              <button
-                onClick={() => setShowResetConfirm(false)}
-                className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
-              >
-                取消
-              </button>
-            </div>
-          )}
-        </div>
       </footer>
     </main>
 

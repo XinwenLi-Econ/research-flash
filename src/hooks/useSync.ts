@@ -13,8 +13,6 @@ import {
   saveFlashLocally,
   updateFlashLocally,
   deleteFlashLocally,
-  clearAllFlashes,
-  clearAllSyncQueue,
   getDeviceInfo,
 } from '@/lib/offline/idb';
 import type { Flash, SyncResponse } from '@/types/flash';
@@ -69,29 +67,19 @@ export function useSync() {
 
   // 从服务器拉取数据（Pull）- 跨设备同步
   const pullFromServer = useCallback(async (): Promise<Flash[]> => {
-    console.log(`[Sync] pullFromServer 开始, isAuthenticated=${isAuthenticated}, user=${user?.id}, isOffline=${isOffline}`);
-
-    if (!isAuthenticated || !user || isOffline) {
-      console.log('[Sync] pullFromServer 跳过：条件不满足');
-      return [];
-    }
+    if (!isAuthenticated || !user || isOffline) return [];
 
     setIsSyncing(true);
 
     try {
       const deviceInfo = await getDeviceInfo();
-      const url = apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`);
-      console.log(`[Sync] 请求 URL: ${url}`);
-
-      const response = await fetch(url, { credentials: 'include' });
-
-      console.log(`[Sync] 服务器响应: ${response.status} ${response.statusText}`);
+      const response = await fetch(
+        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`),
+        { credentials: 'include' }
+      );
 
       if (!response.ok) {
-        const errorText = await response.text();
-        console.error(`[Sync] 拉取失败: ${response.status} - ${errorText}`);
-        // 显示错误给用户
-        alert(`同步失败 (${response.status}): ${response.statusText}`);
+        console.error('[Sync] 拉取数据失败:', response.status, response.statusText);
         return [];
       }
 
@@ -125,22 +113,16 @@ export function useSync() {
         }
       }
 
-      // 🚀 关键：处理「本地有，服务器没有」的情况
-      // 这表示该灵感已在其他设备上被永久删除
+      // 处理「本地有，服务器没有」的情况 - 表示已在其他设备永久删除
       let deletedCount = 0;
       const currentDeviceId = deviceInfo?.deviceId || '';
 
-      console.log(`[Sync] 本地灵感数: ${localFlashes.length}, 服务器灵感数: ${serverFlashes.length}`);
-      console.log(`[Sync] 当前用户: ${user.id}, 当前设备: ${currentDeviceId}`);
-
       for (const localFlash of localFlashes) {
-        // 检查本地灵感是否应该在服务器上存在
         const shouldExistOnServer =
-          localFlash.userId === user.id || // 明确属于当前用户
-          (localFlash.userId === null && localFlash.deviceId === currentDeviceId); // 或者是当前设备的匿名灵感
+          localFlash.userId === user.id ||
+          (localFlash.userId === null && localFlash.deviceId === currentDeviceId);
 
         if (shouldExistOnServer && !serverFlashIds.has(localFlash.id)) {
-          console.log(`[Sync] 删除本地灵感 ${localFlash.id} (userId=${localFlash.userId}, status=${localFlash.status})`);
           await deleteFlashLocally(localFlash.id);
           deletedCount++;
         }
@@ -151,16 +133,15 @@ export function useSync() {
       }
 
       if (conflicts.length > 0) {
-        console.log(`已解决 ${conflicts.length} 个冲突（LWW）`);
+        console.log(`[Sync] 已解决 ${conflicts.length} 个冲突（LWW）`);
       }
 
-      // 🚀 关键：同步完成后更新 Zustand store，刷新 UI
+      // 同步完成后更新 Zustand store，刷新 UI
       const allFlashes = await getAllFlashes();
       allFlashes.sort((a, b) =>
         new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       );
       setFlashes(allFlashes);
-      console.log(`[Sync] 已同步 ${serverFlashes.length} 条灵感，本地共 ${allFlashes.length} 条`);
 
       setLastSyncAt(new Date());
       return serverFlashes;
@@ -268,65 +249,11 @@ export function useSync() {
     };
   }, [isAuthenticated, isOffline, fullSync]);
 
-  // 🚀 强制重置同步：清空本地数据后重新从服务器拉取
-  const forceResetSync = useCallback(async () => {
-    if (!isAuthenticated || !user || isOffline) {
-      console.log('[Sync] forceResetSync 跳过：需要登录且在线');
-      return false;
-    }
-
-    console.log('[Sync] 开始强制重置同步...');
-    setIsSyncing(true);
-
-    try {
-      // 1. 清空本地灵感和同步队列
-      await clearAllFlashes();
-      await clearAllSyncQueue();
-      console.log('[Sync] 已清空本地数据');
-
-      // 2. 从服务器拉取最新数据
-      const deviceInfo = await getDeviceInfo();
-      const response = await fetch(
-        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`),
-        { credentials: 'include' }
-      );
-
-      if (!response.ok) {
-        console.error('[Sync] forceResetSync 拉取失败:', response.statusText);
-        return false;
-      }
-
-      const { serverFlashes }: SyncResponse = await response.json();
-      console.log(`[Sync] 从服务器获取 ${serverFlashes.length} 条灵感`);
-
-      // 3. 保存到本地
-      for (const flash of serverFlashes) {
-        await saveFlashLocally(flash);
-      }
-
-      // 4. 更新 UI 状态
-      const allFlashes = serverFlashes.slice().sort((a, b) =>
-        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
-      );
-      setFlashes(allFlashes);
-
-      console.log('[Sync] 强制重置同步完成');
-      setLastSyncAt(new Date());
-      return true;
-    } catch (error) {
-      console.error('[Sync] forceResetSync 错误:', error);
-      return false;
-    } finally {
-      setIsSyncing(false);
-    }
-  }, [isAuthenticated, user, isOffline, setFlashes]);
-
   return {
     isSyncing,
     lastSyncAt,
     syncPendingItems,
     pullFromServer,
     fullSync,
-    forceResetSync,
   };
 }
