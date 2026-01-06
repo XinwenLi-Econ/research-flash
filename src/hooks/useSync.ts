@@ -73,8 +73,35 @@ export function useSync() {
 
     try {
       const deviceInfo = await getDeviceInfo();
+      const currentDeviceId = deviceInfo?.deviceId || '';
+
+      // 🚀 关键修复：先关联设备，确保该设备的灵感归属到用户
+      // 解决竞态条件：useSync 可能在 useAuth 完成设备关联前就开始拉取
+      if (currentDeviceId) {
+        console.log('[Sync] 拉取前先关联设备...');
+        try {
+          const linkResponse = await fetch(apiUrl('/api/device/link'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({
+              deviceId: currentDeviceId,
+              userId: user.id,
+            }),
+          });
+          if (linkResponse.ok) {
+            const linkResult = await linkResponse.json();
+            console.log(`[Sync] 设备关联完成，关联了 ${linkResult.linkedFlashesCount} 条灵感`);
+          }
+        } catch (linkError) {
+          console.error('[Sync] 设备关联失败:', linkError);
+          // 继续拉取，不阻塞流程
+        }
+      }
+
+      console.log(`[Sync] 开始拉取数据, userId=${user.id}, deviceId=${currentDeviceId}`);
       const response = await fetch(
-        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`),
+        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${currentDeviceId}`),
         { credentials: 'include' }
       );
 
@@ -117,7 +144,7 @@ export function useSync() {
 
       // 处理「本地有，服务器没有」的情况 - 表示已在其他设备永久删除
       let deletedCount = 0;
-      const currentDeviceId = deviceInfo?.deviceId || '';
+      // currentDeviceId 已在函数开头定义
 
       for (const localFlash of localFlashes) {
         const shouldExistOnServer =
@@ -235,14 +262,30 @@ export function useSync() {
 
     // 🚀 修复：从未登录/初始状态 -> 已登录时触发同步
     // wasAuthenticated === false 或 wasAuthenticated === null 都表示之前未登录
-    if (isAuthenticated && !wasAuthenticated && !isOffline && !syncInProgress.current) {
+    // 必须确保 user 对象存在才能同步
+    if (isAuthenticated && user && !wasAuthenticated && !isOffline && !syncInProgress.current) {
       console.log('[Sync] 检测到登录，开始同步数据...');
+      console.log(`[Sync] wasAuthenticated=${wasAuthenticated}, isAuthenticated=${isAuthenticated}, user=${user.id}`);
       syncInProgress.current = true;
-      pullFromServer().finally(() => {
-        syncInProgress.current = false;
-      });
+      pullFromServer()
+        .then((flashes) => {
+          console.log(`[Sync] 登录后同步完成，获取到 ${flashes.length} 条灵感`);
+          // 🔧 调试：在移动端显示同步结果
+          if (typeof window !== 'undefined' && flashes.length >= 0) {
+            alert(`[调试] 登录同步完成\n获取到 ${flashes.length} 条灵感\nuserId: ${user.id}`);
+          }
+        })
+        .catch((error) => {
+          console.error('[Sync] 登录后同步失败:', error);
+          if (typeof window !== 'undefined') {
+            alert(`[调试] 登录同步失败: ${error}`);
+          }
+        })
+        .finally(() => {
+          syncInProgress.current = false;
+        });
     }
-  }, [isAuthenticated, isOffline]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [isAuthenticated, user, isOffline]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // 🚀 页面可见时自动同步（切换回 app 时拉取最新数据）
   useEffect(() => {
