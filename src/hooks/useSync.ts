@@ -80,17 +80,18 @@ export function useSync() {
 
     try {
       const deviceInfo = await getDeviceInfo();
-      console.log(`[Sync] 正在拉取数据, userId=${user.id}, deviceId=${deviceInfo?.deviceId}`);
+      const url = apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`);
+      console.log(`[Sync] 请求 URL: ${url}`);
 
-      const response = await fetch(
-        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`),
-        { credentials: 'include' }
-      );
+      const response = await fetch(url, { credentials: 'include' });
 
       console.log(`[Sync] 服务器响应: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
-        console.error('拉取数据失败:', response.statusText);
+        const errorText = await response.text();
+        console.error(`[Sync] 拉取失败: ${response.status} - ${errorText}`);
+        // 显示错误给用户
+        alert(`同步失败 (${response.status}): ${response.statusText}`);
         return [];
       }
 
