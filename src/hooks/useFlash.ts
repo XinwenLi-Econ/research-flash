@@ -184,7 +184,7 @@ export function useFlash() {
     // 乐观更新
     updateFlash(id, updatedFlash);
 
-    // 后台持久化
+    // 后台持久化 + 立即同步
     (async () => {
       try {
         await updateFlashLocally(updatedFlash);
@@ -195,11 +195,26 @@ export function useFlash() {
           timestamp: Date.now(),
         };
         await addToSyncQueue(queueItem);
+
+        // 🚀 如果在线，立即同步到服务器
+        if (!isOffline) {
+          const response = await fetch(apiUrl('/api/sync'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(queueItem),
+          });
+
+          if (response.ok) {
+            const { clearSyncedItem } = await import('@/lib/offline/idb');
+            await clearSyncedItem(queueItem.id);
+          }
+        }
       } catch (error) {
         console.error('归档失败:', error);
       }
     })();
-  }, [flashes, updateFlash]);
+  }, [flashes, updateFlash, isOffline]);
 
   // Surface 灵感（孵化完成）
   const surfaceFlash = useCallback(async (id: string) => {
@@ -226,11 +241,26 @@ export function useFlash() {
           timestamp: Date.now(),
         };
         await addToSyncQueue(queueItem);
+
+        // 🚀 如果在线，立即同步到服务器
+        if (!isOffline) {
+          const response = await fetch(apiUrl('/api/sync'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(queueItem),
+          });
+
+          if (response.ok) {
+            const { clearSyncedItem } = await import('@/lib/offline/idb');
+            await clearSyncedItem(queueItem.id);
+          }
+        }
       } catch (error) {
         console.error('Surface 失败:', error);
       }
     })();
-  }, [flashes, updateFlash]);
+  }, [flashes, updateFlash, isOffline]);
 
   // 更新灵感内容
   const updateFlashContent = useCallback(async (id: string, content: string) => {
@@ -257,11 +287,26 @@ export function useFlash() {
           timestamp: Date.now(),
         };
         await addToSyncQueue(queueItem);
+
+        // 🚀 如果在线，立即同步到服务器
+        if (!isOffline) {
+          const response = await fetch(apiUrl('/api/sync'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(queueItem),
+          });
+
+          if (response.ok) {
+            const { clearSyncedItem } = await import('@/lib/offline/idb');
+            await clearSyncedItem(queueItem.id);
+          }
+        }
       } catch (error) {
         console.error('更新失败:', error);
       }
     })();
-  }, [flashes, updateFlash]);
+  }, [flashes, updateFlash, isOffline]);
 
   // 删除灵感（软删除）
   const deleteFlash = useCallback(async (id: string) => {
@@ -278,10 +323,13 @@ export function useFlash() {
       version: now,
     };
 
+    // 🚀 乐观更新：立即更新 UI
     updateFlash(id, deletedFlash);
 
+    // 🚀 后台持久化 + 立即同步
     (async () => {
       try {
+        // 本地持久化
         await updateFlashLocally(deletedFlash);
         const queueItem: OfflineQueueItem = {
           id: uuidv4(),
@@ -290,13 +338,32 @@ export function useFlash() {
           timestamp: Date.now(),
         };
         await addToSyncQueue(queueItem);
+
+        // 🚀 如果在线，立即同步到服务器（不等待下次同步周期）
+        if (!isOffline) {
+          const response = await fetch(apiUrl('/api/sync'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(queueItem),
+          });
+
+          if (response.ok) {
+            // 同步成功，从队列中移除
+            const { clearSyncedItem } = await import('@/lib/offline/idb');
+            await clearSyncedItem(queueItem.id);
+            console.log('[deleteFlash] 立即同步成功');
+          } else {
+            console.error('[deleteFlash] 立即同步失败:', response.status);
+          }
+        }
       } catch (error) {
         console.error('删除失败:', error);
       }
     })();
 
     return deletedFlash;
-  }, [flashes, updateFlash]);
+  }, [flashes, updateFlash, isOffline]);
 
   // 恢复灵感（从回收站恢复）
   const restoreFlash = useCallback(async (id: string) => {
@@ -325,13 +392,28 @@ export function useFlash() {
           timestamp: Date.now(),
         };
         await addToSyncQueue(queueItem);
+
+        // 🚀 如果在线，立即同步到服务器
+        if (!isOffline) {
+          const response = await fetch(apiUrl('/api/sync'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(queueItem),
+          });
+
+          if (response.ok) {
+            const { clearSyncedItem } = await import('@/lib/offline/idb');
+            await clearSyncedItem(queueItem.id);
+          }
+        }
       } catch (error) {
         console.error('恢复失败:', error);
       }
     })();
 
     return restoredFlash;
-  }, [flashes, updateFlash]);
+  }, [flashes, updateFlash, isOffline]);
 
   // 永久删除灵感
   const permanentDeleteFlash = useCallback(async (id: string) => {
@@ -351,11 +433,26 @@ export function useFlash() {
           timestamp: Date.now(),
         };
         await addToSyncQueue(queueItem);
+
+        // 🚀 如果在线，立即同步到服务器
+        if (!isOffline) {
+          const response = await fetch(apiUrl('/api/sync'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify(queueItem),
+          });
+
+          if (response.ok) {
+            const { clearSyncedItem } = await import('@/lib/offline/idb');
+            await clearSyncedItem(queueItem.id);
+          }
+        }
       } catch (error) {
         console.error('永久删除失败:', error);
       }
     })();
-  }, [flashes, removeFlash]);
+  }, [flashes, removeFlash, isOffline]);
 
   // 清空回收站（永久删除所有已删除的灵感）
   const clearTrash = useCallback(async () => {
