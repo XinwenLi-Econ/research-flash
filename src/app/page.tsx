@@ -52,6 +52,7 @@ export default function Home() {
     restoreFlash,
     permanentDeleteFlash,
     clearTrash,
+    forceServerClearTrash,
     updateFlashContent,
     getIncubating,
     getSurfaced,
@@ -65,6 +66,8 @@ export default function Home() {
     show: boolean;
   } | null>(null);
   const [showClearConfirm, setShowClearConfirm] = useState(false);
+  const [showSyncFix, setShowSyncFix] = useState(false);
+  const [syncFixStatus, setSyncFixStatus] = useState<string | null>(null);
 
   // 初始化同步
   useSync();
@@ -237,6 +240,47 @@ export default function Home() {
       <footer className="max-w-2xl mx-auto mt-12 text-center text-sm text-gray-400">
         <p>灵感会在 7 天后自动进入「待回顾」状态</p>
         <p className="mt-1">每周日晚 8 点推送本周灵感回顾</p>
+
+        {/* 修复同步数据 */}
+        <div className="mt-6 pt-4 border-t border-gray-100">
+          {syncFixStatus && (
+            <p className="text-xs text-green-500 mb-2">{syncFixStatus}</p>
+          )}
+          {!showSyncFix ? (
+            <button
+              onClick={() => setShowSyncFix(true)}
+              className="text-xs text-gray-300 hover:text-gray-500 transition-colors"
+            >
+              数据不同步？点击修复
+            </button>
+          ) : (
+            <div className="flex items-center justify-center gap-2">
+              <span className="text-xs text-orange-500">清理服务器回收站数据？</span>
+              <button
+                onClick={async () => {
+                  setSyncFixStatus('正在清理...');
+                  const result = await forceServerClearTrash();
+                  if (result.success) {
+                    setSyncFixStatus(`已清理 ${result.deletedCount} 条服务器数据，请刷新页面`);
+                  } else {
+                    setSyncFixStatus('清理失败，请稍后重试');
+                  }
+                  setShowSyncFix(false);
+                  setTimeout(() => setSyncFixStatus(null), 5000);
+                }}
+                className="px-2 py-1 text-xs bg-orange-500 text-white rounded hover:bg-orange-600 transition-colors"
+              >
+                确定
+              </button>
+              <button
+                onClick={() => setShowSyncFix(false)}
+                className="px-2 py-1 text-xs text-gray-500 hover:text-gray-700 transition-colors"
+              >
+                取消
+              </button>
+            </div>
+          )}
+        </div>
       </footer>
     </main>
 
