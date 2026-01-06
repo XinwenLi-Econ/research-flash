@@ -19,7 +19,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const userId = searchParams.get('userId');
 
+    console.log(`[/api/sync/pull] 收到请求, userId=${userId}`);
+
     if (!userId) {
+      console.log('[/api/sync/pull] 缺少 userId 参数');
       return NextResponse.json(
         { error: '需要 userId 参数' },
         { status: 400 }
@@ -30,11 +33,16 @@ export async function GET(request: NextRequest) {
     const authResult = await requireSession(request, userId);
 
     if (!authResult.authenticated) {
+      console.log(`[/api/sync/pull] 认证失败, userId=${userId}`);
       return authResult.error;
     }
 
+    console.log(`[/api/sync/pull] 认证成功, userId=${userId}`);
+
     // 获取用户所有设备的灵感
     const serverFlashes = await flashService.getFlashesByUser(userId);
+
+    console.log(`[/api/sync/pull] 返回 ${serverFlashes.length} 条灵感, userId=${userId}`);
 
     return NextResponse.json({
       serverFlashes,
