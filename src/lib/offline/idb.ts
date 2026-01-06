@@ -171,6 +171,12 @@ export async function clearAllSyncQueue(): Promise<void> {
   await db.clear('syncQueue');
 }
 
+// 清空所有本地灵感（用于强制重置）
+export async function clearAllFlashes(): Promise<void> {
+  const db = await getDB();
+  await db.clear('flashes');
+}
+
 // ========== 认证缓存操作 ==========
 
 /**
