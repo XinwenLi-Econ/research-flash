@@ -1,6 +1,6 @@
 // ResearchFlash Service Worker
 // 版本号用于缓存更新
-const CACHE_VERSION = 'v1';
+const CACHE_VERSION = 'v2';
 const CACHE_NAME = `researchflash-${CACHE_VERSION}`;
 
 // 需要预缓存的静态资源
