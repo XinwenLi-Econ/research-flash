@@ -413,6 +413,37 @@ export function useFlash() {
     return deletedFlashes.length;
   }, [flashes, removeFlash, isOffline, user]);
 
+  // 强制清理服务器回收站（用于解决本地已清空但服务器未清空的问题）
+  const forceServerClearTrash = useCallback(async (): Promise<{ success: boolean; deletedCount: number }> => {
+    if (!user?.id) {
+      console.log('[forceServerClearTrash] 未登录，跳过');
+      return { success: false, deletedCount: 0 };
+    }
+
+    console.log(`[forceServerClearTrash] 强制清理服务器回收站, userId=${user.id}`);
+
+    try {
+      const response = await fetch(apiUrl('/api/trash/clear'), {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ userId: user.id }),
+      });
+
+      if (response.ok) {
+        const result = await response.json();
+        console.log(`[forceServerClearTrash] 服务端删除成功:`, result);
+        return { success: true, deletedCount: result.deletedCount || 0 };
+      } else {
+        console.error(`[forceServerClearTrash] 服务端删除失败: ${response.status} ${response.statusText}`);
+        return { success: false, deletedCount: 0 };
+      }
+    } catch (error) {
+      console.error('[forceServerClearTrash] 清空回收站失败:', error);
+      return { success: false, deletedCount: 0 };
+    }
+  }, [user]);
+
   // 按状态筛选
   const getFlashesByStatusLocal = useCallback((status: Flash['status']) => {
     return flashes.filter(f => f.status === status);
@@ -470,6 +501,7 @@ export function useFlash() {
     restoreFlash,
     permanentDeleteFlash,
     clearTrash,
+    forceServerClearTrash,
     mergeRemoteFlashes,
     getIncubating: () => getFlashesByStatusLocal('incubating'),
     getSurfaced: () => getFlashesByStatusLocal('surfaced'),
