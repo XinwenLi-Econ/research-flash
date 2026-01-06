@@ -44,8 +44,12 @@ export async function POST(request: NextRequest) {
 
     const { userId } = validated.data;
 
+    console.log(`[/api/trash/clear] 开始清空回收站, userId=${userId}`);
+
     // 永久删除所有状态为 deleted 的灵感
     const deletedCount = await flashService.permanentDeleteFlashesByUser(userId, 'deleted');
+
+    console.log(`[/api/trash/clear] 已删除 ${deletedCount} 条灵感, userId=${userId}`);
 
     return NextResponse.json({
       success: true,

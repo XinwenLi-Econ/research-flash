@@ -86,6 +86,8 @@ export function useSync() {
       const { serverFlashes }: SyncResponse = await response.json();
       const localFlashes = await getAllFlashes();
 
+      console.log(`[Sync] 服务器返回 ${serverFlashes.length} 条灵感，本地有 ${localFlashes.length} 条`);
+
       // 创建服务器灵感 ID 集合，用于快速查找
       const serverFlashIds = new Set(serverFlashes.map(f => f.id));
 

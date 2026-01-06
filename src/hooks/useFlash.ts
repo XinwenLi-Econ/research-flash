@@ -362,6 +362,8 @@ export function useFlash() {
     const deletedFlashes = flashes.filter(f => f.status === 'deleted');
     if (deletedFlashes.length === 0) return 0;
 
+    console.log(`[clearTrash] 准备删除 ${deletedFlashes.length} 条灵感`);
+
     // 乐观更新：立即从本地状态移除
     for (const flash of deletedFlashes) {
       removeFlash(flash.id);
@@ -383,22 +385,31 @@ export function useFlash() {
           };
           await addToSyncQueue(queueItem);
         }
+        console.log(`[clearTrash] 本地删除完成，已添加 ${deletedFlashes.length} 条到同步队列`);
 
         // 如果已登录且在线，调用服务端批量删除
         if (!isOffline && user?.id) {
+          console.log(`[clearTrash] 调用服务端批量删除, userId=${user.id}`);
           try {
-            await fetch(apiUrl('/api/trash/clear'), {
+            const response = await fetch(apiUrl('/api/trash/clear'), {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               credentials: 'include',
               body: JSON.stringify({ userId: user.id }),
             });
+
+            if (response.ok) {
+              const result = await response.json();
+              console.log(`[clearTrash] 服务端删除成功:`, result);
+            } else {
+              console.error(`[clearTrash] 服务端删除失败: ${response.status} ${response.statusText}`);
+            }
           } catch (error) {
-            console.error('服务端清空回收站失败:', error);
+            console.error('[clearTrash] 服务端清空回收站失败:', error);
           }
         }
       } catch (error) {
-        console.error('清空回收站失败:', error);
+        console.error('[clearTrash] 清空回收站失败:', error);
       }
     })();
 
