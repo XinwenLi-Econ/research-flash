@@ -1,11 +1,11 @@
 // app/api/device/link/route.ts
 // @source: cog.md
 // 设备关联 API - 将设备关联到用户账户
-// 鉴权策略：Session 必需（需验证 session.user.id === userId）
+// 鉴权策略：公开 + 速率限制（与其他同步 API 一致，解决原生应用 cookie 问题）
 
 import { NextRequest, NextResponse } from 'next/server';
 import { flashService } from '@/services/flash.service';
-import { requireSession } from '@/lib/auth-helpers';
+import { checkRateLimit, getClientIP } from '@/lib/auth-helpers';
 import { z } from 'zod';
 
 // 强制动态渲染
@@ -13,15 +13,29 @@ export const dynamic = 'force-dynamic';
 
 const linkSchema = z.object({
   deviceId: z.string().uuid(),
-  userId: z.string(),
+  userId: z.string().min(1),
 });
 
 /**
  * POST /api/device/link - 关联设备到用户账户
- * 鉴权：Session 必需（验证所有权）
+ * 鉴权：公开 + 速率限制（信任客户端传的 userId，与 /api/sync 一致）
  */
 export async function POST(request: NextRequest) {
   try {
+    // 速率限制
+    const clientIP = getClientIP(request);
+    const rateLimit = checkRateLimit(`device:link:${clientIP}`, 30, 60000);
+
+    if (!rateLimit.allowed) {
+      return NextResponse.json(
+        {
+          error: '请求过于频繁，请稍后再试',
+          retryAfter: Math.ceil((rateLimit.resetAt - Date.now()) / 1000),
+        },
+        { status: 429 }
+      );
+    }
+
     const body = await request.json();
     const validated = linkSchema.safeParse(body);
 
@@ -34,15 +48,12 @@ export async function POST(request: NextRequest) {
 
     const { deviceId, userId } = validated.data;
 
-    // Session 验证：必须登录且 userId 匹配
-    const authResult = await requireSession(request, userId);
-
-    if (!authResult.authenticated) {
-      return authResult.error;
-    }
+    console.log(`[/api/device/link] 关联设备 deviceId=${deviceId}, userId=${userId}`);
 
     // 关联设备并更新该设备的灵感
     const linkedCount = await flashService.linkDeviceToUser(deviceId, userId);
+
+    console.log(`[/api/device/link] 关联成功，更新了 ${linkedCount} 条灵感`);
 
     return NextResponse.json({
       success: true,
