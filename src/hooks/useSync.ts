@@ -13,6 +13,8 @@ import {
   saveFlashLocally,
   updateFlashLocally,
   deleteFlashLocally,
+  clearAllFlashes,
+  clearAllSyncQueue,
   getDeviceInfo,
 } from '@/lib/offline/idb';
 import type { Flash, SyncResponse } from '@/types/flash';
@@ -265,11 +267,65 @@ export function useSync() {
     };
   }, [isAuthenticated, isOffline, fullSync]);
 
+  // 🚀 强制重置同步：清空本地数据后重新从服务器拉取
+  const forceResetSync = useCallback(async () => {
+    if (!isAuthenticated || !user || isOffline) {
+      console.log('[Sync] forceResetSync 跳过：需要登录且在线');
+      return false;
+    }
+
+    console.log('[Sync] 开始强制重置同步...');
+    setIsSyncing(true);
+
+    try {
+      // 1. 清空本地灵感和同步队列
+      await clearAllFlashes();
+      await clearAllSyncQueue();
+      console.log('[Sync] 已清空本地数据');
+
+      // 2. 从服务器拉取最新数据
+      const deviceInfo = await getDeviceInfo();
+      const response = await fetch(
+        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`),
+        { credentials: 'include' }
+      );
+
+      if (!response.ok) {
+        console.error('[Sync] forceResetSync 拉取失败:', response.statusText);
+        return false;
+      }
+
+      const { serverFlashes }: SyncResponse = await response.json();
+      console.log(`[Sync] 从服务器获取 ${serverFlashes.length} 条灵感`);
+
+      // 3. 保存到本地
+      for (const flash of serverFlashes) {
+        await saveFlashLocally(flash);
+      }
+
+      // 4. 更新 UI 状态
+      const allFlashes = serverFlashes.slice().sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setFlashes(allFlashes);
+
+      console.log('[Sync] 强制重置同步完成');
+      setLastSyncAt(new Date());
+      return true;
+    } catch (error) {
+      console.error('[Sync] forceResetSync 错误:', error);
+      return false;
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isAuthenticated, user, isOffline, setFlashes]);
+
   return {
     isSyncing,
     lastSyncAt,
     syncPendingItems,
     pullFromServer,
     fullSync,
+    forceResetSync,
   };
 }
