@@ -46,7 +46,12 @@ export async function GET(request: NextRequest) {
     // 获取用户所有设备的灵感
     const serverFlashes = await flashService.getFlashesByUser(userId);
 
-    console.log(`[/api/sync/pull] 返回 ${serverFlashes.length} 条灵感, userId=${userId}`);
+    // 诊断日志：输出各状态数量
+    const statusCounts = serverFlashes.reduce((acc, f) => {
+      acc[f.status] = (acc[f.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+    console.log(`[/api/sync/pull] userId=${userId}, 总数=${serverFlashes.length}, 状态分布:`, JSON.stringify(statusCounts));
 
     return NextResponse.json({
       serverFlashes,
