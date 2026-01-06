@@ -138,6 +138,55 @@ export function useSync() {
         console.log(`[Sync] 已解决 ${conflicts.length} 个冲突（LWW）`);
       }
 
+      // 🚀 自动去重：检测并删除重复灵感（相同内容，保留最早的）
+      const allFlashesBeforeDedup = await getAllFlashes();
+      const contentMap = new Map<string, typeof allFlashesBeforeDedup>();
+
+      for (const flash of allFlashesBeforeDedup) {
+        const key = flash.content.trim();
+        if (!contentMap.has(key)) {
+          contentMap.set(key, []);
+        }
+        contentMap.get(key)!.push(flash);
+      }
+
+      let localDupDeleted = 0;
+      const serverDupIds: string[] = [];
+
+      for (const [, flashList] of contentMap) {
+        if (flashList.length > 1) {
+          // 按创建时间排序，保留最早的
+          flashList.sort((a, b) =>
+            new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime()
+          );
+
+          // 删除除第一条外的所有重复（本地）
+          for (let i = 1; i < flashList.length; i++) {
+            await deleteFlashLocally(flashList[i].id);
+            serverDupIds.push(flashList[i].id);
+            localDupDeleted++;
+          }
+        }
+      }
+
+      // 同时清理服务器上的重复灵感
+      if (serverDupIds.length > 0 && user?.id) {
+        try {
+          await fetch(apiUrl('/api/flash/duplicates'), {
+            method: 'DELETE',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ userId: user.id }),
+          });
+        } catch (error) {
+          console.error('[Sync] 清理服务器重复灵感失败:', error);
+        }
+      }
+
+      if (localDupDeleted > 0) {
+        console.log(`[Sync] 自动去重：删除了 ${localDupDeleted} 条重复灵感`);
+      }
+
       // 同步完成后更新 Zustand store，刷新 UI
       const allFlashes = await getAllFlashes();
       allFlashes.sort((a, b) =>
