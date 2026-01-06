@@ -67,16 +67,25 @@ export function useSync() {
 
   // 从服务器拉取数据（Pull）- 跨设备同步
   const pullFromServer = useCallback(async (): Promise<Flash[]> => {
-    if (!isAuthenticated || !user || isOffline) return [];
+    console.log(`[Sync] pullFromServer 开始, isAuthenticated=${isAuthenticated}, user=${user?.id}, isOffline=${isOffline}`);
+
+    if (!isAuthenticated || !user || isOffline) {
+      console.log('[Sync] pullFromServer 跳过：条件不满足');
+      return [];
+    }
 
     setIsSyncing(true);
 
     try {
       const deviceInfo = await getDeviceInfo();
+      console.log(`[Sync] 正在拉取数据, userId=${user.id}, deviceId=${deviceInfo?.deviceId}`);
+
       const response = await fetch(
         apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${deviceInfo?.deviceId || ''}`),
         { credentials: 'include' }
       );
+
+      console.log(`[Sync] 服务器响应: ${response.status} ${response.statusText}`);
 
       if (!response.ok) {
         console.error('拉取数据失败:', response.statusText);
@@ -116,9 +125,19 @@ export function useSync() {
       // 🚀 关键：处理「本地有，服务器没有」的情况
       // 这表示该灵感已在其他设备上被永久删除
       let deletedCount = 0;
+      const currentDeviceId = deviceInfo?.deviceId || '';
+
+      console.log(`[Sync] 本地灵感数: ${localFlashes.length}, 服务器灵感数: ${serverFlashes.length}`);
+      console.log(`[Sync] 当前用户: ${user.id}, 当前设备: ${currentDeviceId}`);
+
       for (const localFlash of localFlashes) {
-        // 只处理属于当前用户的灵感
-        if (localFlash.userId === user.id && !serverFlashIds.has(localFlash.id)) {
+        // 检查本地灵感是否应该在服务器上存在
+        const shouldExistOnServer =
+          localFlash.userId === user.id || // 明确属于当前用户
+          (localFlash.userId === null && localFlash.deviceId === currentDeviceId); // 或者是当前设备的匿名灵感
+
+        if (shouldExistOnServer && !serverFlashIds.has(localFlash.id)) {
+          console.log(`[Sync] 删除本地灵感 ${localFlash.id} (userId=${localFlash.userId}, status=${localFlash.status})`);
           await deleteFlashLocally(localFlash.id);
           deletedCount++;
         }
