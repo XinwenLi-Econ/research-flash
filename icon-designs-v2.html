@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ResearchFlash 图标设计方案 V2</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', sans-serif;
+      background: linear-gradient(180deg, #0f0f1a 0%, #1a1a2e 50%, #0f0f1a 100%);
+      min-height: 100vh;
+      padding: 40px 20px;
+      color: #fff;
+    }
+
+    h1 {
+      text-align: center;
+      font-weight: 200;
+      font-size: 2.2rem;
+      margin-bottom: 8px;
+      letter-spacing: 4px;
+      background: linear-gradient(90deg, #d4af37, #f4d03f, #d4af37);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #666;
+      margin-bottom: 50px;
+      font-size: 0.85rem;
+      letter-spacing: 2px;
+    }
+
+    .grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+      gap: 30px;
+      max-width: 1600px;
+      margin: 0 auto;
+    }
+
+    .card {
+      background: rgba(255, 255, 255, 0.02);
+      border-radius: 20px;
+      padding: 28px;
+      border: 1px solid rgba(255, 255, 255, 0.06);
+      transition: all 0.4s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 1px;
+      background: linear-gradient(90deg, transparent, rgba(212, 175, 55, 0.3), transparent);
+    }
+
+    .card:hover {
+      transform: translateY(-3px);
+      border-color: rgba(212, 175, 55, 0.2);
+      box-shadow: 0 20px 60px rgba(0, 0, 0, 0.4);
+    }
+
+    .rank {
+      display: inline-block;
+      font-size: 0.7rem;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-weight: 500;
+      letter-spacing: 1px;
+      margin-bottom: 12px;
+    }
+
+    .rank-1 {
+      background: linear-gradient(135deg, #d4af37, #f4d03f);
+      color: #000;
+    }
+
+    .rank-2 {
+      background: rgba(192, 192, 192, 0.2);
+      color: #c0c0c0;
+      border: 1px solid rgba(192, 192, 192, 0.3);
+    }
+
+    .rank-3, .rank-4, .rank-5 {
+      background: rgba(205, 127, 50, 0.15);
+      color: #cd7f32;
+      border: 1px solid rgba(205, 127, 50, 0.3);
+    }
+
+    .title {
+      font-size: 1.3rem;
+      font-weight: 500;
+      margin-bottom: 4px;
+      color: #fff;
+    }
+
+    .title-en {
+      font-size: 0.8rem;
+      color: #666;
+      font-weight: 300;
+      margin-bottom: 12px;
+      font-style: italic;
+    }
+
+    .concept {
+      font-size: 0.75rem;
+      color: #888;
+      margin-bottom: 20px;
+      padding: 8px 12px;
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 8px;
+      border-left: 2px solid #d4af37;
+    }
+
+    .icon-container {
+      display: flex;
+      justify-content: center;
+      align-items: flex-end;
+      gap: 24px;
+      margin: 25px 0;
+      padding: 20px;
+      background: rgba(0, 0, 0, 0.2);
+      border-radius: 16px;
+    }
+
+    .icon-wrapper {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .icon-size-label {
+      font-size: 0.65rem;
+      color: #555;
+      font-family: 'SF Mono', monospace;
+    }
+
+    .icon {
+      border-radius: 22.5%;
+      overflow: hidden;
+      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+    }
+
+    .icon-large { width: 128px; height: 128px; }
+    .icon-medium { width: 64px; height: 64px; }
+    .icon-small { width: 40px; height: 40px; }
+
+    .description {
+      font-size: 0.82rem;
+      color: #999;
+      line-height: 1.7;
+      margin-bottom: 15px;
+    }
+
+    .highlights {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 6px;
+    }
+
+    .highlight {
+      font-size: 0.68rem;
+      padding: 4px 10px;
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 4px;
+      color: #d4af37;
+    }
+
+    /* Animations */
+    @keyframes spark-glow {
+      0%, 100% { filter: drop-shadow(0 0 8px rgba(212, 175, 55, 0.6)); }
+      50% { filter: drop-shadow(0 0 16px rgba(244, 208, 63, 0.9)); }
+    }
+
+    @keyframes ripple {
+      0% { opacity: 0.8; transform: scale(1); }
+      100% { opacity: 0; transform: scale(1.5); }
+    }
+
+    @keyframes prism-light {
+      0%, 100% { opacity: 0.85; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes node-pulse {
+      0%, 100% { opacity: 0.7; }
+      50% { opacity: 1; }
+    }
+
+    @keyframes spiral-rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    @keyframes sand-flow {
+      0% { transform: translateY(-2px); opacity: 0.5; }
+      50% { transform: translateY(2px); opacity: 1; }
+      100% { transform: translateY(-2px); opacity: 0.5; }
+    }
+
+    .spark-bolt { animation: spark-glow 2.5s ease-in-out infinite; }
+    .prism-beam { animation: prism-light 3s ease-in-out infinite; }
+    .neural-node { animation: node-pulse 2s ease-in-out infinite; }
+    .sand-particle { animation: sand-flow 1.5s ease-in-out infinite; }
+  </style>
+</head>
+<body>
+  <h1>RESEARCHFLASH</h1>
+  <p class="subtitle">ICON DESIGN CONCEPTS V2 · Nobel-Class Aesthetics</p>
+
+  <div class="grid">
+
+    <!-- 方案一：The Spark of Insight -->
+    <div class="card">
+      <span class="rank rank-1">STRONGLY RECOMMENDED</span>
+      <div class="title">洞见火花</div>
+      <div class="title-en">The Spark of Insight</div>
+      <div class="concept">设计理念：极简主义 (Minimalism) + 物理学隐喻</div>
+
+      <div class="icon-container">
+        <div class="icon-wrapper">
+          <svg class="icon icon-large" viewBox="0 0 128 128">
+            <defs>
+              <linearGradient id="gold-spark" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#f4d03f"/>
+                <stop offset="50%" style="stop-color:#d4af37"/>
+                <stop offset="100%" style="stop-color:#b8860b"/>
+              </linearGradient>
+              <filter id="spark-glow">
+                <feGaussianBlur stdDeviation="2.5" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+              <filter id="ripple-blur">
+                <feGaussianBlur stdDeviation="0.5"/>
+              </filter>
+            </defs>
+            <!-- 牛津蓝背景 -->
+            <rect width="128" height="128" fill="#002147"/>
+
+            <!-- 随机游走闪电路径 -->
+            <g class="spark-bolt" filter="url(#spark-glow)">
+              <path d="M 58 18
+                       Q 62 22, 55 28
+                       Q 48 34, 56 40
+                       Q 64 46, 58 52
+                       Q 52 58, 60 62
+                       Q 68 66, 62 72
+                       Q 56 78, 64 82
+                       L 64 88"
+                    fill="none"
+                    stroke="url(#gold-spark)"
+                    stroke-width="3.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"/>
+              <!-- 闪电分叉 -->
+              <path d="M 58 52 Q 50 56, 44 54" fill="none" stroke="url(#gold-spark)" stroke-width="2" stroke-linecap="round"/>
+              <path d="M 62 72 Q 70 74, 76 70" fill="none" stroke="url(#gold-spark)" stroke-width="2" stroke-linecap="round"/>
+            </g>
+
+            <!-- 击中点 -->
+            <circle cx="64" cy="92" r="2.5" fill="#f4d03f"/>
+
+            <!-- 水波纹同心圆 -->
+            <g filter="url(#ripple-blur)">
+              <circle cx="64" cy="92" r="8" fill="none" stroke="rgba(244, 208, 63, 0.5)" stroke-width="0.8"/>
+              <circle cx="64" cy="92" r="14" fill="none" stroke="rgba(244, 208, 63, 0.3)" stroke-width="0.6"/>
+              <circle cx="64" cy="92" r="20" fill="none" stroke="rgba(244, 208, 63, 0.15)" stroke-width="0.4"/>
+            </g>
+          </svg>
+          <span class="icon-size-label">128px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-medium" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#002147"/>
+            <path d="M 58 18 Q 62 22, 55 28 Q 48 34, 56 40 Q 64 46, 58 52 Q 52 58, 60 62 Q 68 66, 62 72 Q 56 78, 64 82 L 64 88" fill="none" stroke="#d4af37" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M 58 52 Q 50 56, 44 54" fill="none" stroke="#d4af37" stroke-width="3" stroke-linecap="round"/>
+            <path d="M 62 72 Q 70 74, 76 70" fill="none" stroke="#d4af37" stroke-width="3" stroke-linecap="round"/>
+            <circle cx="64" cy="92" r="4" fill="#f4d03f"/>
+            <circle cx="64" cy="92" r="10" fill="none" stroke="rgba(244, 208, 63, 0.4)" stroke-width="1.5"/>
+            <circle cx="64" cy="92" r="18" fill="none" stroke="rgba(244, 208, 63, 0.2)" stroke-width="1"/>
+          </svg>
+          <span class="icon-size-label">64px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-small" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#002147"/>
+            <path d="M 58 20 Q 62 26, 55 32 Q 48 38, 58 50 Q 68 62, 58 72 L 64 88" fill="none" stroke="#f4d03f" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/>
+            <circle cx="64" cy="95" r="6" fill="#f4d03f"/>
+            <circle cx="64" cy="95" r="14" fill="none" stroke="rgba(244, 208, 63, 0.4)" stroke-width="2"/>
+          </svg>
+          <span class="icon-size-label">40px</span>
+        </div>
+      </div>
+
+      <p class="description">深邃的牛津蓝背景如学术夜空，金色闪电由随机游走轨迹抽象而成，暗示资产定价的核心数学模型。末端击中点激起水波纹，象征洞见的影响力扩散。</p>
+      <div class="highlights">
+        <span class="highlight">随机游走隐喻</span>
+        <span class="highlight">金蓝对比</span>
+        <span class="highlight">诺奖气质</span>
+        <span class="highlight">高能探测器</span>
+      </div>
+    </div>
+
+    <!-- 方案二：The Prism of Complexity -->
+    <div class="card">
+      <span class="rank rank-2">RECOMMENDED</span>
+      <div class="title">复杂棱镜</div>
+      <div class="title-en">The Prism of Complexity</div>
+      <div class="concept">设计理念：跨学科融合 (Interdisciplinary Fusion)</div>
+
+      <div class="icon-container">
+        <div class="icon-wrapper">
+          <svg class="icon icon-large" viewBox="0 0 128 128">
+            <defs>
+              <linearGradient id="frosted-bg" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#f8f9fa"/>
+                <stop offset="100%" style="stop-color:#e9ecef"/>
+              </linearGradient>
+              <linearGradient id="prism-face" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:rgba(255,255,255,0.9)"/>
+                <stop offset="100%" style="stop-color:rgba(200,200,200,0.6)"/>
+              </linearGradient>
+              <filter id="prism-shadow">
+                <feDropShadow dx="2" dy="4" stdDeviation="3" flood-opacity="0.15"/>
+              </filter>
+            </defs>
+            <!-- 磨砂白背景 -->
+            <rect width="128" height="128" fill="url(#frosted-bg)"/>
+
+            <!-- 入射白光 -->
+            <line x1="15" y1="58" x2="48" y2="64" stroke="#888" stroke-width="2" opacity="0.8"/>
+
+            <!-- 三棱镜 -->
+            <g filter="url(#prism-shadow)">
+              <polygon points="50,35 82,64 50,93" fill="url(#prism-face)" stroke="rgba(150,150,150,0.5)" stroke-width="1"/>
+              <!-- 棱镜内部高光 -->
+              <line x1="52" y1="40" x2="52" y2="88" stroke="rgba(255,255,255,0.8)" stroke-width="1"/>
+            </g>
+
+            <!-- 折射光束 -->
+            <g class="prism-beam">
+              <!-- 克莱因蓝 -->
+              <line x1="82" y1="64" x2="115" y2="38" stroke="#002FA7" stroke-width="2.5" stroke-linecap="round"/>
+              <!-- 紫罗兰 -->
+              <line x1="82" y1="64" x2="115" y2="64" stroke="#8B5CF6" stroke-width="2.5" stroke-linecap="round"/>
+              <!-- 极光绿 -->
+              <line x1="82" y1="64" x2="115" y2="90" stroke="#10B981" stroke-width="2.5" stroke-linecap="round"/>
+            </g>
+
+            <!-- 光束末端光点 -->
+            <circle cx="115" cy="38" r="3" fill="#002FA7" opacity="0.6"/>
+            <circle cx="115" cy="64" r="3" fill="#8B5CF6" opacity="0.6"/>
+            <circle cx="115" cy="90" r="3" fill="#10B981" opacity="0.6"/>
+          </svg>
+          <span class="icon-size-label">128px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-medium" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#f0f0f0"/>
+            <line x1="15" y1="58" x2="48" y2="64" stroke="#888" stroke-width="3"/>
+            <polygon points="50,35 82,64 50,93" fill="rgba(255,255,255,0.9)" stroke="rgba(150,150,150,0.6)" stroke-width="1.5"/>
+            <line x1="82" y1="64" x2="115" y2="38" stroke="#002FA7" stroke-width="4" stroke-linecap="round"/>
+            <line x1="82" y1="64" x2="115" y2="64" stroke="#8B5CF6" stroke-width="4" stroke-linecap="round"/>
+            <line x1="82" y1="64" x2="115" y2="90" stroke="#10B981" stroke-width="4" stroke-linecap="round"/>
+          </svg>
+          <span class="icon-size-label">64px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-small" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#f0f0f0"/>
+            <line x1="15" y1="60" x2="48" y2="64" stroke="#888" stroke-width="5"/>
+            <polygon points="50,35 82,64 50,93" fill="rgba(255,255,255,0.9)" stroke="rgba(150,150,150,0.7)" stroke-width="2"/>
+            <line x1="82" y1="64" x2="115" y2="35" stroke="#002FA7" stroke-width="6" stroke-linecap="round"/>
+            <line x1="82" y1="64" x2="115" y2="64" stroke="#8B5CF6" stroke-width="6" stroke-linecap="round"/>
+            <line x1="82" y1="64" x2="115" y2="93" stroke="#10B981" stroke-width="6" stroke-linecap="round"/>
+          </svg>
+          <span class="icon-size-label">40px</span>
+        </div>
+      </div>
+
+      <p class="description">磨砂白背景上，一束白光（原始想法）射入透明三棱镜，折射出克莱因蓝、紫罗兰、极光绿三道光束，代表物理学、计算机、认知科学等不同视角的解析。</p>
+      <div class="highlights">
+        <span class="highlight">跨学科分解</span>
+        <span class="highlight">光影质感</span>
+        <span class="highlight">思想折射</span>
+        <span class="highlight">高端精致</span>
+      </div>
+    </div>
+
+    <!-- 方案三：The Neural Network -->
+    <div class="card">
+      <span class="rank rank-3">OPTION #3</span>
+      <div class="title">神经链接</div>
+      <div class="title-en">The Neural Network</div>
+      <div class="concept">设计理念：认知科学与计算 (Cognitive & Computing)</div>
+
+      <div class="icon-container">
+        <div class="icon-wrapper">
+          <svg class="icon icon-large" viewBox="0 0 128 128">
+            <defs>
+              <filter id="cyan-glow">
+                <feGaussianBlur stdDeviation="3" result="coloredBlur"/>
+                <feMerge>
+                  <feMergeNode in="coloredBlur"/>
+                  <feMergeNode in="SourceGraphic"/>
+                </feMerge>
+              </filter>
+              <radialGradient id="node-grad" cx="50%" cy="50%" r="50%">
+                <stop offset="0%" style="stop-color:#67E8F9"/>
+                <stop offset="100%" style="stop-color:#22D3EE"/>
+              </radialGradient>
+            </defs>
+            <!-- 黑色背景 -->
+            <rect width="128" height="128" fill="#0a0a0a"/>
+
+            <!-- 连接线构成 Σ 形状 -->
+            <g stroke="rgba(255,255,255,0.25)" stroke-width="1">
+              <!-- 顶部水平线 -->
+              <line x1="35" y1="28" x2="93" y2="28"/>
+              <!-- 左上到中心的斜线 -->
+              <line x1="35" y1="28" x2="64" y2="64"/>
+              <!-- 中心到左下的斜线 -->
+              <line x1="64" y1="64" x2="35" y2="100"/>
+              <!-- 底部水平线 -->
+              <line x1="35" y1="100" x2="93" y2="100"/>
+              <!-- 额外连接增强网络感 -->
+              <line x1="64" y1="28" x2="64" y2="64"/>
+              <line x1="93" y1="28" x2="64" y2="64"/>
+              <line x1="64" y1="64" x2="93" y2="100"/>
+              <line x1="64" y1="64" x2="64" y2="100"/>
+            </g>
+
+            <!-- 发光节点 -->
+            <g class="neural-node" filter="url(#cyan-glow)">
+              <!-- 顶行节点 -->
+              <circle cx="35" cy="28" r="5" fill="url(#node-grad)"/>
+              <circle cx="64" cy="28" r="5" fill="url(#node-grad)"/>
+              <circle cx="93" cy="28" r="5" fill="url(#node-grad)"/>
+              <!-- 中心节点（最大） -->
+              <circle cx="64" cy="64" r="8" fill="url(#node-grad)"/>
+              <!-- 底行节点 -->
+              <circle cx="35" cy="100" r="5" fill="url(#node-grad)"/>
+              <circle cx="64" cy="100" r="5" fill="url(#node-grad)"/>
+              <circle cx="93" cy="100" r="5" fill="url(#node-grad)"/>
+            </g>
+          </svg>
+          <span class="icon-size-label">128px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-medium" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#0a0a0a"/>
+            <g stroke="rgba(255,255,255,0.3)" stroke-width="1.5">
+              <line x1="35" y1="28" x2="93" y2="28"/>
+              <line x1="35" y1="28" x2="64" y2="64"/>
+              <line x1="64" y1="64" x2="35" y2="100"/>
+              <line x1="35" y1="100" x2="93" y2="100"/>
+              <line x1="93" y1="28" x2="64" y2="64"/>
+              <line x1="64" y1="64" x2="93" y2="100"/>
+            </g>
+            <g fill="#22D3EE">
+              <circle cx="35" cy="28" r="7"/>
+              <circle cx="64" cy="28" r="7"/>
+              <circle cx="93" cy="28" r="7"/>
+              <circle cx="64" cy="64" r="10"/>
+              <circle cx="35" cy="100" r="7"/>
+              <circle cx="64" cy="100" r="7"/>
+              <circle cx="93" cy="100" r="7"/>
+            </g>
+          </svg>
+          <span class="icon-size-label">64px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-small" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#0a0a0a"/>
+            <g stroke="rgba(255,255,255,0.35)" stroke-width="2">
+              <line x1="35" y1="28" x2="93" y2="28"/>
+              <line x1="35" y1="28" x2="64" y2="64"/>
+              <line x1="64" y1="64" x2="35" y2="100"/>
+              <line x1="35" y1="100" x2="93" y2="100"/>
+            </g>
+            <g fill="#67E8F9">
+              <circle cx="35" cy="28" r="10"/>
+              <circle cx="93" cy="28" r="10"/>
+              <circle cx="64" cy="64" r="12"/>
+              <circle cx="35" cy="100" r="10"/>
+              <circle cx="93" cy="100" r="10"/>
+            </g>
+          </svg>
+          <span class="icon-size-label">40px</span>
+        </div>
+      </div>
+
+      <p class="description">纯黑背景上，霓虹青色发光节点通过白色连接线构成 Σ（求和）符号的网络结构。将数学符号融入神经网络，暗示用计算解决经济问题的路径。</p>
+      <div class="highlights">
+        <span class="highlight">神经网络</span>
+        <span class="highlight">数学符号</span>
+        <span class="highlight">霓虹青</span>
+        <span class="highlight">AI/算法</span>
+      </div>
+    </div>
+
+    <!-- 方案四：The Golden Ratio Spiral -->
+    <div class="card">
+      <span class="rank rank-4">OPTION #4</span>
+      <div class="title">黄金螺旋</div>
+      <div class="title-en">The Golden Ratio Spiral</div>
+      <div class="concept">设计理念：自然法则与经济规律 (Nature & Economics)</div>
+
+      <div class="icon-container">
+        <div class="icon-wrapper">
+          <svg class="icon icon-large" viewBox="0 0 128 128">
+            <defs>
+              <linearGradient id="bronze-grad" x1="0%" y1="0%" x2="100%" y2="100%">
+                <stop offset="0%" style="stop-color:#CD7F32"/>
+                <stop offset="50%" style="stop-color:#B8860B"/>
+                <stop offset="100%" style="stop-color:#8B6914"/>
+              </linearGradient>
+            </defs>
+            <!-- 金融灰背景 -->
+            <rect width="128" height="128" fill="#4a5568"/>
+
+            <!-- 斐波那契螺旋（由数据点组成） -->
+            <g fill="none" stroke="url(#bronze-grad)" stroke-width="2" stroke-dasharray="1,3">
+              <!-- 螺旋路径 -->
+              <path d="M 64 64
+                       Q 64 44, 84 44
+                       Q 104 44, 104 64
+                       Q 104 94, 74 94
+                       Q 34 94, 34 54
+                       Q 34 14, 74 14
+                       Q 114 14, 114 54
+                       Q 114 104, 64 104"/>
+            </g>
+
+            <!-- 二进制/K线数据点 -->
+            <g font-family="monospace" font-size="4" fill="url(#bronze-grad)" opacity="0.8">
+              <text x="66" y="56">01</text>
+              <text x="78" y="48">10</text>
+              <text x="92" y="52">11</text>
+              <text x="98" y="66">00</text>
+              <text x="94" y="82">01</text>
+              <text x="82" y="92">10</text>
+              <text x="66" y="96">11</text>
+              <text x="48" y="90">00</text>
+              <text x="38" y="76">01</text>
+              <text x="38" y="58">10</text>
+              <text x="46" y="42">11</text>
+              <text x="58" y="28">00</text>
+              <text x="76" y="22">01</text>
+              <text x="94" y="26">10</text>
+              <text x="108" y="38">11</text>
+              <text x="112" y="58">00</text>
+              <text x="108" y="82">01</text>
+              <text x="94" y="100">10</text>
+              <text x="72" y="106">11</text>
+            </g>
+
+            <!-- 螺旋中心强调点 -->
+            <circle cx="64" cy="64" r="3" fill="#CD7F32"/>
+          </svg>
+          <span class="icon-size-label">128px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-medium" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#4a5568"/>
+            <path d="M 64 64 Q 64 44, 84 44 Q 104 44, 104 64 Q 104 94, 74 94 Q 34 94, 34 54 Q 34 14, 74 14 Q 114 14, 114 54 Q 114 104, 64 104" fill="none" stroke="#CD7F32" stroke-width="3" stroke-dasharray="2,4"/>
+            <circle cx="64" cy="64" r="5" fill="#CD7F32"/>
+          </svg>
+          <span class="icon-size-label">64px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-small" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#4a5568"/>
+            <path d="M 64 64 Q 64 44, 84 44 Q 104 44, 104 64 Q 104 94, 74 94 Q 34 94, 34 54 Q 34 14, 74 14" fill="none" stroke="#CD7F32" stroke-width="5" stroke-dasharray="3,5"/>
+            <circle cx="64" cy="64" r="8" fill="#CD7F32"/>
+          </svg>
+          <span class="icon-size-label">40px</span>
+        </div>
+      </div>
+
+      <p class="description">金融灰背景上的斐波那契螺旋线，由无数细小的二进制代码组成虚线。远看是完美的黄金螺旋，近看是数据流，体现宏观视野与微观基础的结合。</p>
+      <div class="highlights">
+        <span class="highlight">黄金分割</span>
+        <span class="highlight">自然秩序</span>
+        <span class="highlight">数据构成</span>
+        <span class="highlight">定价规律</span>
+      </div>
+    </div>
+
+    <!-- 方案五：The Hourglass of Alpha -->
+    <div class="card">
+      <span class="rank rank-5">OPTION #5</span>
+      <div class="title">Alpha 沙漏</div>
+      <div class="title-en">The Hourglass of Alpha</div>
+      <div class="concept">设计理念：时间与效率 (Time & Efficiency)</div>
+
+      <div class="icon-container">
+        <div class="icon-wrapper">
+          <svg class="icon icon-large" viewBox="0 0 128 128">
+            <defs>
+              <linearGradient id="glass-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+                <stop offset="0%" style="stop-color:#374151"/>
+                <stop offset="50%" style="stop-color:#4b5563"/>
+                <stop offset="100%" style="stop-color:#374151"/>
+              </linearGradient>
+            </defs>
+            <!-- 纯白背景 -->
+            <rect width="128" height="128" fill="#ffffff"/>
+
+            <!-- 沙漏外框 -->
+            <g stroke="#1f2937" stroke-width="2" fill="none">
+              <!-- 顶部横线 -->
+              <line x1="38" y1="20" x2="90" y2="20"/>
+              <!-- 底部横线 -->
+              <line x1="38" y1="108" x2="90" y2="108"/>
+              <!-- 左侧轮廓 -->
+              <path d="M 42 20 L 42 38 Q 42 50, 54 58 L 54 70 Q 42 78, 42 90 L 42 108"/>
+              <!-- 右侧轮廓 -->
+              <path d="M 86 20 L 86 38 Q 86 50, 74 58 L 74 70 Q 86 78, 86 90 L 86 108"/>
+            </g>
+
+            <!-- 上方杂乱数据点 -->
+            <g fill="#9ca3af" class="sand-particle">
+              <circle cx="52" cy="32" r="2"/>
+              <circle cx="64" cy="28" r="1.5"/>
+              <circle cx="76" cy="34" r="2"/>
+              <circle cx="58" cy="40" r="1.5"/>
+              <circle cx="70" cy="38" r="2"/>
+              <circle cx="64" cy="36" r="1.5"/>
+              <circle cx="48" cy="38" r="1.5"/>
+              <circle cx="80" cy="30" r="1.5"/>
+              <circle cx="56" cy="46" r="1.5"/>
+              <circle cx="72" cy="44" r="1.5"/>
+              <circle cx="64" cy="48" r="1.5"/>
+            </g>
+
+            <!-- 中心流动（细线） -->
+            <line x1="64" y1="58" x2="64" y2="70" stroke="#6b7280" stroke-width="1" stroke-dasharray="2,2"/>
+
+            <!-- 下方有序金字塔 -->
+            <g fill="#1f2937">
+              <!-- 金字塔形状的有序堆积 -->
+              <polygon points="64,75 50,98 78,98" fill="#374151"/>
+              <!-- 金字塔层次线 -->
+              <line x1="54" y1="88" x2="74" y2="88" stroke="#fff" stroke-width="0.5" opacity="0.5"/>
+              <line x1="57" y1="82" x2="71" y2="82" stroke="#fff" stroke-width="0.5" opacity="0.5"/>
+            </g>
+
+            <!-- 中心闪电符号 -->
+            <g transform="translate(64, 64) scale(0.4)">
+              <polygon points="5,-20 -8,5 0,5 -5,20 8,-5 0,-5" fill="#f59e0b"/>
+            </g>
+          </svg>
+          <span class="icon-size-label">128px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-medium" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#ffffff"/>
+            <g stroke="#1f2937" stroke-width="2.5" fill="none">
+              <line x1="38" y1="20" x2="90" y2="20"/>
+              <line x1="38" y1="108" x2="90" y2="108"/>
+              <path d="M 42 20 L 42 38 Q 42 50, 54 58 L 54 70 Q 42 78, 42 90 L 42 108"/>
+              <path d="M 86 20 L 86 38 Q 86 50, 74 58 L 74 70 Q 86 78, 86 90 L 86 108"/>
+            </g>
+            <g fill="#9ca3af">
+              <circle cx="54" cy="34" r="3"/>
+              <circle cx="64" cy="30" r="3"/>
+              <circle cx="74" cy="36" r="3"/>
+              <circle cx="60" cy="42" r="3"/>
+              <circle cx="68" cy="44" r="3"/>
+            </g>
+            <polygon points="64,75 48,100 80,100" fill="#374151"/>
+            <polygon points="68,58 58,68 62,68 58,78 68,68 64,68" fill="#f59e0b"/>
+          </svg>
+          <span class="icon-size-label">64px</span>
+        </div>
+        <div class="icon-wrapper">
+          <svg class="icon icon-small" viewBox="0 0 128 128">
+            <rect width="128" height="128" fill="#ffffff"/>
+            <g stroke="#1f2937" stroke-width="4" fill="none">
+              <line x1="38" y1="20" x2="90" y2="20"/>
+              <line x1="38" y1="108" x2="90" y2="108"/>
+              <path d="M 42 20 L 42 38 Q 42 52, 58 62 L 58 66 Q 42 76, 42 90 L 42 108"/>
+              <path d="M 86 20 L 86 38 Q 86 52, 70 62 L 70 66 Q 86 76, 86 90 L 86 108"/>
+            </g>
+            <g fill="#9ca3af">
+              <circle cx="56" cy="36" r="5"/>
+              <circle cx="72" cy="38" r="5"/>
+              <circle cx="64" cy="44" r="5"/>
+            </g>
+            <polygon points="64,72 46,102 82,102" fill="#374151"/>
+            <polygon points="70,56 56,72 62,72 56,88 70,72 64,72" fill="#f59e0b" transform="translate(0,-2) scale(0.8) translate(8,8)"/>
+          </svg>
+          <span class="icon-size-label">40px</span>
+        </div>
+      </div>
+
+      <p class="description">纯白背景上的极简线条沙漏。上方是杂乱散布的数据点（Raw Data），通过中心流动，下方堆积成有序金字塔（Insight/Alpha）。中心点缀微小闪电符号。</p>
+      <div class="highlights">
+        <span class="highlight">高效转化</span>
+        <span class="highlight">混沌→秩序</span>
+        <span class="highlight">功能直观</span>
+        <span class="highlight">极简线条</span>
+      </div>
+    </div>
+
+  </div>
+
+  <div style="text-align: center; margin-top: 60px; padding: 30px; background: rgba(0,0,0,0.2); border-radius: 16px; max-width: 800px; margin-left: auto; margin-right: auto;">
+    <p style="color: #d4af37; font-size: 0.9rem; margin-bottom: 10px;">RECOMMENDATION SUMMARY</p>
+    <p style="color: #888; font-size: 0.8rem; line-height: 1.8;">
+      <strong style="color:#f4d03f">方案一 · 洞见火花</strong> — 随机游走隐喻最贴合金融研究，诺奖级学术气质<br>
+      <strong style="color:#c0c0c0">方案二 · 复杂棱镜</strong> — 跨学科方法论的完美视觉外化<br>
+      <strong style="color:#cd7f32">方案三/四/五</strong> — 各有侧重：AI计算 / 自然规律 / 效率转化
+    </p>
+  </div>
+
+  <p style="text-align: center; margin-top: 40px; color: #444; font-size: 0.75rem;">
+    ResearchFlash Icon Concepts V2 · Designed for Nobel-Class Researchers
+  </p>
+
+</body>
+</html>
