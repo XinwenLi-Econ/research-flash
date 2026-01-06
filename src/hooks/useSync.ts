@@ -12,6 +12,7 @@ import {
   getAllFlashes,
   saveFlashLocally,
   updateFlashLocally,
+  deleteFlashLocally,
   getDeviceInfo,
 } from '@/lib/offline/idb';
 import type { Flash, SyncResponse } from '@/types/flash';
@@ -85,6 +86,9 @@ export function useSync() {
       const { serverFlashes }: SyncResponse = await response.json();
       const localFlashes = await getAllFlashes();
 
+      // 创建服务器灵感 ID 集合，用于快速查找
+      const serverFlashIds = new Set(serverFlashes.map(f => f.id));
+
       // Last-Write-Wins 合并
       const conflicts: Array<{ local: Flash; server: Flash; resolution: 'local' | 'server' }> = [];
 
@@ -107,6 +111,21 @@ export function useSync() {
             conflicts.push({ local: localFlash, server: serverFlash, resolution });
           }
         }
+      }
+
+      // 🚀 关键：处理「本地有，服务器没有」的情况
+      // 这表示该灵感已在其他设备上被永久删除
+      let deletedCount = 0;
+      for (const localFlash of localFlashes) {
+        // 只处理属于当前用户的灵感
+        if (localFlash.userId === user.id && !serverFlashIds.has(localFlash.id)) {
+          await deleteFlashLocally(localFlash.id);
+          deletedCount++;
+        }
+      }
+
+      if (deletedCount > 0) {
+        console.log(`[Sync] 删除了 ${deletedCount} 条已在其他设备删除的灵感`);
       }
 
       if (conflicts.length > 0) {
