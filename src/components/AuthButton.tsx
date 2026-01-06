@@ -6,16 +6,13 @@
 import { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useSync } from '@/hooks/useSync';
 import { sendVerificationEmail, changePassword } from '@/lib/auth-client';
 
 export function AuthButton() {
   const { user, isAuthenticated, isLoading, signIn, signUp, signOut, deviceId, linkDevice } = useAuth();
-  const { isSyncing, forceResync } = useSync();
   const [showModal, setShowModal] = useState(false);
   const [showMenu, setShowMenu] = useState(false);
   const [showPasswordModal, setShowPasswordModal] = useState(false);
-  const [syncMessage, setSyncMessage] = useState<string | null>(null);
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
 
@@ -30,15 +27,6 @@ export function AuthButton() {
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, []);
 
-  // 处理强制同步
-  const handleForceSync = async () => {
-    setSyncMessage('正在同步...');
-    const result = await forceResync();
-    setSyncMessage(result.message);
-    setTimeout(() => setSyncMessage(null), 3000);
-    setShowMenu(false);
-  };
-
   if (isLoading) {
     return (
       <div className="text-gray-400 text-sm animate-pulse">
@@ -52,20 +40,10 @@ export function AuthButton() {
 
     return (
       <div className="relative" ref={menuRef}>
-        {/* 同步状态提示 */}
-        {syncMessage && (
-          <div className="absolute right-0 top-full mt-1 px-3 py-1.5 bg-blue-100 text-blue-700 text-xs rounded shadow-sm whitespace-nowrap z-50">
-            {syncMessage}
-          </div>
-        )}
-
         <button
           onClick={() => setShowMenu(!showMenu)}
           className="flex items-center gap-2 text-sm text-gray-600 hover:text-gray-800"
         >
-          {isSyncing && (
-            <span className="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-          )}
           <span className="font-medium">{user.name || user.email}</span>
           {!isVerified && (
             <span className="px-1.5 py-0.5 text-xs bg-yellow-100 text-yellow-700 rounded">
@@ -85,18 +63,6 @@ export function AuthButton() {
                 {isVerified ? '邮箱已验证' : '邮箱未验证'}
               </p>
             </div>
-
-            {/* 强制同步按钮 */}
-            <button
-              onClick={handleForceSync}
-              disabled={isSyncing}
-              className="w-full px-4 py-2 text-left text-sm text-blue-600 hover:bg-gray-50 disabled:opacity-50 flex items-center gap-2"
-            >
-              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
-              </svg>
-              {isSyncing ? '同步中...' : '强制同步数据'}
-            </button>
 
             {!isVerified && (
               <button
