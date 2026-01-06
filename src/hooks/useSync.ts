@@ -302,11 +302,85 @@ export function useSync() {
     };
   }, [isAuthenticated, isOffline, fullSync]);
 
+  // 🚀 强制重新同步（用于修复数据不一致问题）
+  // 重新关联设备 + 清空本地数据 + 从服务器拉取
+  const forceResync = useCallback(async (): Promise<{ success: boolean; message: string }> => {
+    if (!isAuthenticated || !user || isOffline) {
+      return { success: false, message: '需要登录且在线才能重新同步' };
+    }
+
+    setIsSyncing(true);
+    console.log('[Sync] 开始强制重新同步...');
+
+    try {
+      const deviceInfo = await getDeviceInfo();
+      const currentDeviceId = deviceInfo?.deviceId || '';
+
+      // 1. 重新关联设备（确保设备的灵感关联到用户）
+      if (currentDeviceId) {
+        console.log('[Sync] 重新关联设备...');
+        const linkResponse = await fetch(apiUrl('/api/device/link'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            deviceId: currentDeviceId,
+            userId: user.id,
+          }),
+        });
+
+        if (linkResponse.ok) {
+          const result = await linkResponse.json();
+          console.log(`[Sync] 设备关联成功，更新了 ${result.linkedFlashesCount} 条灵感`);
+        }
+      }
+
+      // 2. 从服务器拉取数据
+      console.log('[Sync] 从服务器拉取数据...');
+      const pullResponse = await fetch(
+        apiUrl(`/api/sync/pull?userId=${user.id}&deviceId=${currentDeviceId}`),
+        { credentials: 'include' }
+      );
+
+      if (!pullResponse.ok) {
+        return { success: false, message: `拉取数据失败: ${pullResponse.status}` };
+      }
+
+      const { serverFlashes }: SyncResponse = await pullResponse.json();
+      console.log(`[Sync] 服务器返回 ${serverFlashes.length} 条灵感`);
+
+      // 3. 清空本地数据并重新保存服务器数据
+      const { clearAllFlashes } = await import('@/lib/offline/idb');
+      await clearAllFlashes();
+      console.log('[Sync] 已清空本地数据');
+
+      for (const flash of serverFlashes) {
+        await saveFlashLocally(flash);
+      }
+      console.log(`[Sync] 已保存 ${serverFlashes.length} 条灵感到本地`);
+
+      // 4. 更新 UI
+      const sortedFlashes = [...serverFlashes].sort((a, b) =>
+        new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+      );
+      setFlashes(sortedFlashes);
+
+      setLastSyncAt(new Date());
+      return { success: true, message: `同步成功，共 ${serverFlashes.length} 条灵感` };
+    } catch (error) {
+      console.error('[Sync] 强制重新同步失败:', error);
+      return { success: false, message: '同步失败，请稍后重试' };
+    } finally {
+      setIsSyncing(false);
+    }
+  }, [isAuthenticated, user, isOffline, setFlashes]);
+
   return {
     isSyncing,
     lastSyncAt,
     syncPendingItems,
     pullFromServer,
     fullSync,
+    forceResync,
   };
 }
