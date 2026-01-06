@@ -12,9 +12,22 @@ const MAX_LENGTH = 280; // @R2
 export function FlashInput() {
   const [content, setContent] = useState('');
   const [isSaving, setIsSaving] = useState(false);
+  const [isMobile, setIsMobile] = useState(true); // 默认隐藏，避免闪烁
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { createFlash } = useFlash();
   const { isOffline } = useOffline();
+
+  // 检测是否为移动设备（触摸屏或小屏幕）
+  useEffect(() => {
+    const checkMobile = () => {
+      const isTouchDevice = 'ontouchstart' in window || navigator.maxTouchPoints > 0;
+      const isSmallScreen = window.innerWidth < 768;
+      setIsMobile(isTouchDevice || isSmallScreen);
+    };
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // @R1: 首屏自动聚焦
   useEffect(() => {
@@ -78,9 +91,11 @@ export function FlashInput() {
           请精简至280字内 {/* @R2 */}
         </div>
       )}
-      <div className="mt-2 text-sm text-gray-400 hidden md:block">
-        ⌘ + Enter 快速保存
-      </div>
+      {!isMobile && (
+        <div className="mt-2 text-sm text-gray-400">
+          ⌘ + Enter 快速保存
+        </div>
+      )}
     </div>
   );
 }
