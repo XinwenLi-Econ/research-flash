@@ -265,21 +265,13 @@ export function useSync() {
     // 必须确保 user 对象存在才能同步
     if (isAuthenticated && user && !wasAuthenticated && !isOffline && !syncInProgress.current) {
       console.log('[Sync] 检测到登录，开始同步数据...');
-      console.log(`[Sync] wasAuthenticated=${wasAuthenticated}, isAuthenticated=${isAuthenticated}, user=${user.id}`);
       syncInProgress.current = true;
       pullFromServer()
         .then((flashes) => {
           console.log(`[Sync] 登录后同步完成，获取到 ${flashes.length} 条灵感`);
-          // 🔧 调试：在移动端显示同步结果
-          if (typeof window !== 'undefined' && flashes.length >= 0) {
-            alert(`[调试] 登录同步完成\n获取到 ${flashes.length} 条灵感\nuserId: ${user.id}`);
-          }
         })
         .catch((error) => {
           console.error('[Sync] 登录后同步失败:', error);
-          if (typeof window !== 'undefined') {
-            alert(`[调试] 登录同步失败: ${error}`);
-          }
         })
         .finally(() => {
           syncInProgress.current = false;
