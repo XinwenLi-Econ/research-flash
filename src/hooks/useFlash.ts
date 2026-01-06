@@ -364,54 +364,51 @@ export function useFlash() {
 
     console.log(`[clearTrash] 准备删除 ${deletedFlashes.length} 条灵感`);
 
-    // 乐观更新：立即从本地状态移除
-    for (const flash of deletedFlashes) {
-      removeFlash(flash.id);
-    }
+    try {
+      const { deleteFlashLocally } = await import('@/lib/offline/idb');
 
-    // 后台处理
-    (async () => {
-      try {
-        const { deleteFlashLocally } = await import('@/lib/offline/idb');
+      // 🚀 如果已登录且在线，先调用服务端批量删除（同步等待）
+      if (!isOffline && user?.id) {
+        console.log(`[clearTrash] 调用服务端批量删除, userId=${user.id}`);
+        try {
+          const response = await fetch(apiUrl('/api/trash/clear'), {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
+            body: JSON.stringify({ userId: user.id }),
+          });
 
-        // 本地删除
-        for (const flash of deletedFlashes) {
-          await deleteFlashLocally(flash.id);
-          const queueItem: OfflineQueueItem = {
-            id: uuidv4(),
-            action: 'delete',
-            data: flash,
-            timestamp: Date.now(),
-          };
-          await addToSyncQueue(queueItem);
-        }
-        console.log(`[clearTrash] 本地删除完成，已添加 ${deletedFlashes.length} 条到同步队列`);
-
-        // 如果已登录且在线，调用服务端批量删除
-        if (!isOffline && user?.id) {
-          console.log(`[clearTrash] 调用服务端批量删除, userId=${user.id}`);
-          try {
-            const response = await fetch(apiUrl('/api/trash/clear'), {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              credentials: 'include',
-              body: JSON.stringify({ userId: user.id }),
-            });
-
-            if (response.ok) {
-              const result = await response.json();
-              console.log(`[clearTrash] 服务端删除成功:`, result);
-            } else {
-              console.error(`[clearTrash] 服务端删除失败: ${response.status} ${response.statusText}`);
-            }
-          } catch (error) {
-            console.error('[clearTrash] 服务端清空回收站失败:', error);
+          if (response.ok) {
+            const result = await response.json();
+            console.log(`[clearTrash] 服务端删除成功:`, result);
+          } else {
+            console.error(`[clearTrash] 服务端删除失败: ${response.status} ${response.statusText}`);
           }
+        } catch (error) {
+          console.error('[clearTrash] 服务端清空回收站失败:', error);
         }
-      } catch (error) {
-        console.error('[clearTrash] 清空回收站失败:', error);
       }
-    })();
+
+      // 本地删除 + 添加到同步队列（作为备份）
+      for (const flash of deletedFlashes) {
+        await deleteFlashLocally(flash.id);
+        const queueItem: OfflineQueueItem = {
+          id: uuidv4(),
+          action: 'delete',
+          data: flash,
+          timestamp: Date.now(),
+        };
+        await addToSyncQueue(queueItem);
+      }
+      console.log(`[clearTrash] 本地删除完成，已添加 ${deletedFlashes.length} 条到同步队列`);
+
+      // 最后更新 UI 状态
+      for (const flash of deletedFlashes) {
+        removeFlash(flash.id);
+      }
+    } catch (error) {
+      console.error('[clearTrash] 清空回收站失败:', error);
+    }
 
     return deletedFlashes.length;
   }, [flashes, removeFlash, isOffline, user]);
