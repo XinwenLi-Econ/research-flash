@@ -1,6 +1,6 @@
 // ResearchFlash Service Worker
 // 版本号用于缓存更新
-const CACHE_VERSION = 'v2';
+const CACHE_VERSION = 'v3';
 const CACHE_NAME = `researchflash-${CACHE_VERSION}`;
 
 // 需要预缓存的静态资源
@@ -41,7 +41,7 @@ self.addEventListener('activate', (event) => {
   self.clients.claim();
 });
 
-// 请求拦截
+// 请求拦截 - 全部使用 Network First 策略确保获取最新资源
 self.addEventListener('fetch', (event) => {
   const { request } = event;
   const url = new URL(request.url);
@@ -56,41 +56,9 @@ self.addEventListener('fetch', (event) => {
     return;
   }
 
-  // 静态资源使用 Cache First
-  if (isStaticAsset(url.pathname)) {
-    event.respondWith(cacheFirst(request));
-    return;
-  }
-
-  // 页面请求使用 Network First
+  // 所有请求使用 Network First，确保获取最新资源
   event.respondWith(networkFirst(request));
 });
-
-// 判断是否为静态资源
-function isStaticAsset(pathname) {
-  return /\.(js|css|png|jpg|jpeg|gif|svg|ico|woff|woff2)$/.test(pathname) ||
-         pathname.startsWith('/_next/static/');
-}
-
-// Cache First 策略
-async function cacheFirst(request) {
-  const cached = await caches.match(request);
-  if (cached) {
-    return cached;
-  }
-
-  try {
-    const response = await fetch(request);
-    if (response.ok) {
-      const cache = await caches.open(CACHE_NAME);
-      cache.put(request, response.clone());
-    }
-    return response;
-  } catch (error) {
-    console.log('[SW] Fetch failed for:', request.url);
-    throw error;
-  }
-}
 
 // Network First 策略
 async function networkFirst(request) {
