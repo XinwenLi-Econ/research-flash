@@ -9,7 +9,8 @@ const allowedOrigins = [
   'https://flash.xinwen-li.com',
   'https://research-flash.vercel.app',
   'capacitor://localhost',  // iOS Capacitor WebView
-  'http://localhost',       // Android Capacitor WebView
+  'https://localhost',      // Android Capacitor WebView (默认 HTTPS)
+  'http://localhost',       // Android Capacitor WebView (备用 HTTP)
   'http://localhost:3000',  // 本地开发
 ];
 
