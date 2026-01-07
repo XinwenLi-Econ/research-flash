@@ -15,7 +15,8 @@
     "cap:sync": "npx cap sync",
     "cap:build": "bun run build:mobile && npx cap sync",
     "cap:android": "npx cap open android",
-    "cap:ios": "npx cap open ios"
+    "cap:ios": "npx cap open ios",
+    "cap:export-ipa": "bash scripts/export-ipa.sh"
   },
   "dependencies": {
     "@capacitor/android": "^8.0.0",
