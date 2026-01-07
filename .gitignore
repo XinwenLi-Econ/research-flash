@@ -31,6 +31,10 @@ yarn-error.log*
 *.apk
 *.ipa
 *.aab
+*.idsig
+
+# Temporary design files
+icon-*.html
 
 # Capacitor native builds
 android/.gradle/
