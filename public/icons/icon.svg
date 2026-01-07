@@ -1,13 +1,35 @@
-<svg width="512" height="512" xmlns="http://www.w3.org/2000/svg">
-  <rect width="100%" height="100%" fill="#3b82f6" rx="64"/>
-  <text
-    x="50%"
-    y="50%"
-    font-family="system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif"
-    font-size="200"
-    font-weight="bold"
-    fill="white"
-    text-anchor="middle"
-    dominant-baseline="central"
-  >RF</text>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024">
+    <defs>
+      <radialGradient id="bg" cx="40%" cy="30%" r="70%">
+        <stop offset="0%" style="stop-color:#0d4f8b"/>
+        <stop offset="100%" style="stop-color:#002147"/>
+      </radialGradient>
+      <linearGradient id="gold" x1="0%" y1="0%" x2="0%" y2="100%">
+        <stop offset="0%" style="stop-color:#f5e6a3"/>
+        <stop offset="30%" style="stop-color:#d4af37"/>
+        <stop offset="100%" style="stop-color:#9a7b2c"/>
+      </linearGradient>
+      <filter id="glow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="20" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="softGlow" x="-50%" y="-50%" width="200%" height="200%">
+        <feGaussianBlur stdDeviation="45"/>
+      </filter>
+    </defs>
+    <rect width="1024" height="1024" fill="url(#bg)"/>
+    <ellipse cx="512" cy="512" rx="280" ry="400" fill="rgba(212, 175, 55, 0.03)" filter="url(#softGlow)"/>
+    <g filter="url(#glow)">
+      <path d="M 483 125 Q 540 200, 427 273" fill="none" stroke="url(#gold)" stroke-width="34" stroke-linecap="round"/>
+      <path d="M 427 273 Q 313 346, 443 420" fill="none" stroke="url(#gold)" stroke-width="28" stroke-linecap="round"/>
+      <path d="M 443 420 Q 569 494, 466 568" fill="none" stroke="url(#gold)" stroke-width="25" stroke-linecap="round"/>
+      <path d="M 466 568 Q 370 642, 500 716" fill="none" stroke="url(#gold)" stroke-width="22" stroke-linecap="round"/>
+      <path d="M 500 716 Q 540 756, 512 824" fill="none" stroke="url(#gold)" stroke-width="17" stroke-linecap="round"/>
+      <path d="M 427 273 Q 340 238, 273 262" fill="none" stroke="url(#gold)" stroke-width="14" stroke-linecap="round"/>
+      <path d="M 466 568 Q 569 545, 654 568" fill="none" stroke="url(#gold)" stroke-width="14" stroke-linecap="round"/>
+    </g>
+    <circle cx="512" cy="852" r="17" fill="#f5e6a3"/>
+    <circle cx="512" cy="852" r="45" fill="none" stroke="rgba(212, 175, 55, 0.6)" stroke-width="5.5"/>
+    <circle cx="512" cy="852" r="85" fill="none" stroke="rgba(212, 175, 55, 0.3)" stroke-width="4.5"/>
+    <circle cx="512" cy="852" r="136" fill="none" stroke="rgba(212, 175, 55, 0.15)" stroke-width="3.5"/>
+  </svg>
