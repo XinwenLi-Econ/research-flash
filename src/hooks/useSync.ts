@@ -126,8 +126,20 @@ export function useSync() {
 
         if (!localFlash) {
           // 服务器有，本地没有 -> 拉取到本地
-          await saveFlashLocally(serverFlash);
+          // 🚀 修复：如果服务器的灵感是 deleted 状态，不拉取（已被删除）
+          if (serverFlash.status !== 'deleted') {
+            await saveFlashLocally(serverFlash);
+          }
         } else {
+          // 🚀 关键修复：本地 deleted 状态优先，不被服务器覆盖
+          // 场景：用户在本地删除灵感，但删除操作还没同步到服务器
+          // 此时不应该让服务器的旧版本覆盖本地的删除状态
+          if (localFlash.status === 'deleted' && serverFlash.status !== 'deleted') {
+            console.log(`[Sync] 跳过覆盖本地已删除的灵感: ${localFlash.id}`);
+            // 保留本地 deleted 状态，不更新
+            continue;
+          }
+
           // 都有 -> 应用 LWW
           const { winner, resolution } = resolveConflict(localFlash, serverFlash);
 

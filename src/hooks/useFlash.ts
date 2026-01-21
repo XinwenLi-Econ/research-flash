@@ -309,6 +309,7 @@ export function useFlash() {
   }, [flashes, updateFlash, isOffline]);
 
   // 删除灵感（软删除）
+  // 🚀 修复：确保 IndexedDB 持久化完成后再返回，避免关闭应用时数据丢失
   const deleteFlash = useCallback(async (id: string) => {
     const flash = flashes.find(f => f.id === id);
     if (!flash || flash.status === 'deleted') return;
@@ -326,41 +327,40 @@ export function useFlash() {
     // 🚀 乐观更新：立即更新 UI
     updateFlash(id, deletedFlash);
 
-    // 🚀 后台持久化 + 立即同步
-    (async () => {
-      try {
-        // 本地持久化
-        await updateFlashLocally(deletedFlash);
-        const queueItem: OfflineQueueItem = {
-          id: uuidv4(),
-          action: 'update',
-          data: deletedFlash,
-          timestamp: Date.now(),
-        };
-        await addToSyncQueue(queueItem);
+    try {
+      // 🚀 关键修复：同步等待本地持久化完成
+      await updateFlashLocally(deletedFlash);
+      const queueItem: OfflineQueueItem = {
+        id: uuidv4(),
+        action: 'update',
+        data: deletedFlash,
+        timestamp: Date.now(),
+      };
+      await addToSyncQueue(queueItem);
+      console.log('[deleteFlash] 本地持久化完成');
 
-        // 🚀 如果在线，立即同步到服务器（不等待下次同步周期）
-        if (!isOffline) {
-          const response = await fetch(apiUrl('/api/sync'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(queueItem),
-          });
-
+      // 后台同步到服务器（不阻塞返回）
+      if (!isOffline) {
+        fetch(apiUrl('/api/sync'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(queueItem),
+        }).then(async (response) => {
           if (response.ok) {
-            // 同步成功，从队列中移除
             const { clearSyncedItem } = await import('@/lib/offline/idb');
             await clearSyncedItem(queueItem.id);
             console.log('[deleteFlash] 立即同步成功');
           } else {
             console.error('[deleteFlash] 立即同步失败:', response.status);
           }
-        }
-      } catch (error) {
-        console.error('删除失败:', error);
+        }).catch((error) => {
+          console.error('[deleteFlash] 同步请求失败:', error);
+        });
       }
-    })();
+    } catch (error) {
+      console.error('删除失败:', error);
+    }
 
     return deletedFlash;
   }, [flashes, updateFlash, isOffline]);
@@ -416,42 +416,47 @@ export function useFlash() {
   }, [flashes, updateFlash, isOffline]);
 
   // 永久删除灵感
+  // 🚀 修复：确保 IndexedDB 删除完成后再返回，避免关闭应用时数据未删除
   const permanentDeleteFlash = useCallback(async (id: string) => {
     const flash = flashes.find(f => f.id === id);
     if (!flash) return;
 
+    // 🚀 乐观更新：立即从 UI 移除
     removeFlash(id);
 
-    (async () => {
-      try {
-        const { deleteFlashLocally } = await import('@/lib/offline/idb');
-        await deleteFlashLocally(id);
-        const queueItem: OfflineQueueItem = {
-          id: uuidv4(),
-          action: 'delete',
-          data: flash,
-          timestamp: Date.now(),
-        };
-        await addToSyncQueue(queueItem);
+    try {
+      // 🚀 关键修复：同步等待本地删除完成
+      const { deleteFlashLocally } = await import('@/lib/offline/idb');
+      await deleteFlashLocally(id);
+      const queueItem: OfflineQueueItem = {
+        id: uuidv4(),
+        action: 'delete',
+        data: flash,
+        timestamp: Date.now(),
+      };
+      await addToSyncQueue(queueItem);
+      console.log('[permanentDeleteFlash] 本地删除完成');
 
-        // 🚀 如果在线，立即同步到服务器
-        if (!isOffline) {
-          const response = await fetch(apiUrl('/api/sync'), {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
-            body: JSON.stringify(queueItem),
-          });
-
+      // 后台同步到服务器（不阻塞返回）
+      if (!isOffline) {
+        fetch(apiUrl('/api/sync'), {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify(queueItem),
+        }).then(async (response) => {
           if (response.ok) {
             const { clearSyncedItem } = await import('@/lib/offline/idb');
             await clearSyncedItem(queueItem.id);
+            console.log('[permanentDeleteFlash] 同步成功');
           }
-        }
-      } catch (error) {
-        console.error('永久删除失败:', error);
+        }).catch((error) => {
+          console.error('[permanentDeleteFlash] 同步请求失败:', error);
+        });
       }
-    })();
+    } catch (error) {
+      console.error('永久删除失败:', error);
+    }
   }, [flashes, removeFlash, isOffline]);
 
   // 清空回收站（永久删除所有已删除的灵感）
