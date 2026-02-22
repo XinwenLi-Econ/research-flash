@@ -150,6 +150,9 @@ export function useFlash() {
           });
 
           if (response.ok) {
+            // 同步成功：清除 syncQueue 中的 create 操作，避免重复推送
+            const { clearSyncedItem } = await import('@/lib/offline/idb');
+            await clearSyncedItem(queueItem.id);
             // 更新同步时间
             const syncedFlash: Flash = {
               ...flash,

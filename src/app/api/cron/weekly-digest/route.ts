@@ -4,7 +4,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users, flashes } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { eq, and, desc } from 'drizzle-orm';
 import { sendWeeklyDigestEmail } from '@/lib/email';
 
 export const dynamic = 'force-dynamic';
@@ -62,9 +62,19 @@ export async function GET(request: NextRequest) {
         .where(and(
           eq(flashes.userId, user.id),
           eq(flashes.status, 'surfaced')
-        ));
+        ))
+        .orderBy(desc(flashes.createdAt));
 
-      if (surfacedFlashes.length === 0) {
+      // 按内容去重，保留最早创建的
+      const seenContent = new Set<string>();
+      const dedupedFlashes = surfacedFlashes.filter(f => {
+        const key = f.content.trim();
+        if (seenContent.has(key)) return false;
+        seenContent.add(key);
+        return true;
+      });
+
+      if (dedupedFlashes.length === 0) {
         skippedCount++;
         continue;
       }
@@ -73,7 +83,7 @@ export async function GET(request: NextRequest) {
       const result = await sendWeeklyDigestEmail(
         user.email,
         user.name || undefined,
-        surfacedFlashes.map(f => ({
+        dedupedFlashes.map(f => ({
           id: f.id,
           content: f.content,
           createdAt: f.createdAt

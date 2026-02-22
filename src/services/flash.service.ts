@@ -140,7 +140,7 @@ export const flashService = {
   },
 
   /**
-   * 同步灵感（Upsert - 使用数据库级别的 ON CONFLICT）
+   * 同步灵感（Upsert - 带版本比较和状态流转保护）
    */
   async syncFlash(flash: Flash): Promise<void> {
     const now = new Date();
@@ -148,30 +148,70 @@ export const flashService = {
     // 确保设备存在
     await this.ensureDevice(flash.deviceId, flash.userId);
 
-    // 使用 ON CONFLICT DO UPDATE（数据库级别 upsert，避免竞态条件）
-    await db.insert(flashes)
-      .values({
-        id: flash.id,
-        content: flash.content,
-        status: flash.status,
-        deviceId: flash.deviceId,
-        userId: flash.userId,
-        createdAt: flash.createdAt,
-        syncedAt: now,
-        updatedAt: flash.updatedAt,
-        version: flash.version,
-      })
-      .onConflictDoUpdate({
-        target: flashes.id,
-        set: {
+    // 先查询服务端当前记录
+    const existing = await db.select()
+      .from(flashes)
+      .where(eq(flashes.id, flash.id))
+      .limit(1);
+
+    if (existing.length === 0) {
+      // 服务端不存在，直接插入
+      await db.insert(flashes)
+        .values({
+          id: flash.id,
           content: flash.content,
           status: flash.status,
+          deviceId: flash.deviceId,
           userId: flash.userId,
+          createdAt: flash.createdAt,
           syncedAt: now,
           updatedAt: flash.updatedAt,
           version: flash.version,
-        },
-      });
+        });
+    } else {
+      const serverRecord = existing[0];
+      const serverVersion = new Date(serverRecord.version).getTime();
+      const clientVersion = new Date(flash.version).getTime();
+
+      // 状态流转保护：不允许客户端将状态回退
+      // incubating → surfaced → archived 是单向不可逆的
+      const statusOrder: Record<string, number> = {
+        'incubating': 0,
+        'surfaced': 1,
+        'archived': 2,
+        'deleted': 3,
+      };
+      const serverStatusOrder = statusOrder[serverRecord.status] ?? 0;
+      const clientStatusOrder = statusOrder[flash.status] ?? 0;
+
+      // 如果客户端试图回退状态（如 incubating 覆盖 surfaced），拒绝状态变更
+      const finalStatus = clientStatusOrder >= serverStatusOrder
+        ? flash.status
+        : serverRecord.status;
+
+      // 版本比较：只有客户端版本更新时才更新内容字段
+      if (clientVersion >= serverVersion) {
+        await db.update(flashes)
+          .set({
+            content: flash.content,
+            status: finalStatus,
+            userId: flash.userId,
+            syncedAt: now,
+            updatedAt: flash.updatedAt,
+            version: flash.version,
+          })
+          .where(eq(flashes.id, flash.id));
+      } else if (finalStatus !== serverRecord.status) {
+        // 客户端版本较旧，但状态需要前进（如 deleted）
+        await db.update(flashes)
+          .set({
+            status: finalStatus,
+            syncedAt: now,
+          })
+          .where(eq(flashes.id, flash.id));
+      }
+      // 否则：客户端版本旧且状态无前进，忽略此次同步
+    }
   },
 
   /**
