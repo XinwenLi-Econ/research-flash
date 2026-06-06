@@ -38,7 +38,7 @@ bun run cap:build
 
 # Step 3: 确保图标等资源同步
 echo -e "${YELLOW}[3/5]${NC} 同步 iOS 资源..."
-npx cap sync ios
+bunx cap sync ios
 
 # Step 4: Archive
 echo -e "${YELLOW}[4/5]${NC} 执行 Xcode Archive（这可能需要几分钟）..."
